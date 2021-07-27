@@ -5,11 +5,17 @@
 %%% 
 function setparams (local_home_dir,run_name)
 
-  %%% Toggles number of layers
-  use_three_layer = false; 
+  %%% Choose configuration
+  %%% This affects the forcing that is permitted and the discretization in
+  %%% the vertical.
+  config = 'wind';
+%   config = 'rand';
+  
+  %%% Set true to take averaged diagnostics
+  full_diags = false;
 
   %%% Load constant parameters 
-  constants;
+  constants;   
   
   %%% Run directory
   run_name = strtrim(run_name); 
@@ -43,60 +49,76 @@ function setparams (local_home_dir,run_name)
   N = 128;
   
   %%% Physical parameters
-  rho0 = 1000;                  %%% Reference density 
-  f0 = -1e-4;                   %%% Coriolis parameter
-  beta = 1e-11;               %%% Coriolis parameter gradient  
-  Ly = 250*m1km;                %%% Domain length.   
+  f0 = 8e-5;                   %%% Coriolis parameter 
+  phiP = 0;                %%% Angle of rotation relative to north (0=N, pi/2=E, pi=S, 3pi/2=W), default 0
+  beta = 0e-11;               %%% Coriolis parameter gradient
+  beta_x = -beta*sin(phiP);     %%% Coriolis parameter gradient in x-direction
+  beta_y = beta*cos(phiP);      %%% Coriolis parameter gradient in y-direction
+  Ly = 400*m1km;                %%% Domain length.   
   Lx = 2*Ly;
-  if (use_three_layer)
-    geff = [g 0.5e-2 0.5e-2];   %%% Reduced gravity at layer interface 
-  else
-    geff = [g 0.5e-2];          %%% Reduced gravity at layer interface 
-  end     
   H = 4000;                     %%% Ocean depth  
-  if (use_three_layer)    
-    H1 = 200;                   %%% Initial upper layer thickness
-    H2 = 200;                   %%% Initial middle layer thickness
-    H0 = [H1 H2 H-H1-H2];       %%% Initial layer thicknesses - used for wave speed calculation  
-  else
-    H1 = 250;                   %%% Initial upper layer thickness    
-    H0 = [H1 H-H1];             %%% Initial layer thicknesses - used for wave speed calculation  
-  end
-  E0 = 0.01;                    %%% Initial EKE density
   rb = 0;                    %%% Linear bottom drag
   Cd = 2e-3;                %%% Quadratic bottom drag
   Cd_surf = 0e-3;           %%% Surface drag coefficient
-  tau0 = 0;                  %%% Wind stress maximum    
-  go_west = true;              %%% Set true for westward flow - reverses wind stress and initial flow  
-  if (use_three_layer)
-    eta_north = [-200 -400];     %%% Relaxation layer depths at northern boundary
-  else
-    eta_north = -200;
-    eta_south = -350;
-    eta_south_dense = -50;
-  end  
-  deta1 = (eta_north-eta_south)*geff(2)/geff(1);                    %%% Initial SSH change across the channel (or equivalent surface pressure change)  
-  if (go_west)                  %%% Relaxation time scales
-    tRelax_u = -1;
-    tRelax_v = -1;
-    tRelax_h = 7*t1day;                
-  else
-    tRelax_u = -1;
-    tRelax_v = -1;
-    tRelax_h = 7*t1day;         
+  switch (config)
+    case 'wind'
+      tau0 = 0.05;                  %%% Wind stress maximum    
+      Fbaro0 = 0; %0.01;                 %%% Maximum depth-integrated along-slope pressure gradient force
+    case 'rand'
+      tau0 = 0;                  %%% Wind stress maximum    
+      Fbaro0 = 0;                 %%% Maximum depth-integrated along-slope pressure gradient force
   end
-  Lrelax = 25*m1km;            %%% Meridional width of nudging zone
-  Xrelax = Lx/2;               %%% Location of buoyancy forcing on shelf
-  Xrelax_dense = 0;           
-  Wrelax = 25*m1km;               %%% Zonal width of shelf forcing
+  go_west = true;              %%% Set true for westward flow - reverses wind stress and initial flow    
+  tRelax_u = 1*t1day;         %%% Sponge relaxation time scales
+  tRelax_v = 1*t1day;
+  tRelax_h = 1*t1day;          
+  Lrelax = 50*m1km;           %%% Sponge relaxation width
+  
+  %%% Stratification parameters
+  rho0 = 1000;                  %%% Reference density 
+  dz = 1;                       %%% Discretization step for continuous density profile
+  zz = 0:-dz:-H;                %%% Grid for continuous density profile
+  hs = 400;                     %%% Exponential decay scale for density profile
+  hl = 40000;                   %%% Linear decay scale for density profile 
+  rhoBot = 1028;                %%% Sea floor density in continuous density profile
+  rhoSurf = 1024;               %%% Sea surface density in continuous density profile
+  rhoRange = rhoBot-rhoSurf;
+  
+  %%% Random forcing parameters
+  switch (config)
+    case 'wind'
+      useRandomForcing = false;
+      RF_F0_rot = 0; %%% Random forcing amplitude (m^2/s^2)
+    case 'rand'
+      useRandomForcing = true;
+      RF_F0_rot = 0.05/rho0; %%% Random forcing amplitude (m^2/s^2)
+  end  
+  useBaroclinicForcing = false; %%% Apply random forcing to top layer only  
+  RF_tau = 10*t1day; %%% Autocorrelation timescale  
+  lambdaK = 80*m1km; %%% Peak energy input lengthscale for random forcing
+  Ymin_RF = 0; %%% No random forcing below this latitude
+  Ymax_RF = Ly-Lrelax; %%% No random forcing above this latitude
+  Lramp_RF = 30*m1km; %%% Latitudinal width of region over which to ramp up the random forcing
   
   %%% Temporal parameters  
-  tmax = 10*t1year;
-%   tmax = 100*t1day;
-  savefreq = 5*t1day; 
-%   savefreq = 400; 
-  savefreqEZ = 1*t1day;
-%   savefreqEZ = 0.1*t1day;
+  if (full_diags)
+    tmax = 10*t1year;
+  else
+    tmax = 5*t1year;
+  end
+  savefreq = 5*t1day;   
+  savefreqEZ = 0.1*t1day;  
+  if (full_diags)
+    savefreqAvg = t1year;
+    savefreqUMom = t1year;
+    savefreqVMom= t1year;
+    savefreqThic = -1;
+  else
+    savefreqAvg = -t1year;
+    savefreqUMom = -t1year;
+    savefreqVMom= -t1year;
+    savefreqThic = -1;
+  end
   restart = 0;
   startIdx = 0;
   
@@ -109,10 +131,11 @@ function setparams (local_home_dir,run_name)
   SOR_opt_freq = 1000; 
   
   %%% Grids
-  if (use_three_layer)
-    Nlay = 3;
-  else
-    Nlay = 2;
+  switch (config)
+    case 'wind'
+      Nlay = 7;
+    case 'rand'
+      Nlay = 4;
   end
   Ny = N;  
   d = Ly/Ny;  
@@ -126,49 +149,193 @@ function setparams (local_home_dir,run_name)
   [YY_u,XX_u] = meshgrid(yy_h,xx_q(1:Nx));
   [YY_v,XX_v] = meshgrid(yy_q(1:Ny),xx_h);    
   
+  %%% Will be incremented as more diagnostic figures are produced
+  fignum = 0;
   
+  
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%% DENSITY STRATIFICATION %%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  %%% Exponential/inear continuous density profile
+  rhoRef = rhoBot - rhoRange*(exp(zz/hs)+zz/hl-exp(-H/hs)+H/hl)/(1-exp(-H/hs)+H/hl); 
+
+  
+  
+  %%% Option 1: uniform density jumps
+  
+%   %%% Offshore layer elevations
+%   E0 = zeros(1,Nlay+1); 
+%   E0(Nlay+1) = -H;
+%   for k=2:Nlay
+%     E0(k) = zz(find(rhoRef-rhoSurf>(k-1)*rhoRange/Nlay,1,'first')); %%% Break into Nlay-1 density jumps of equal sizes
+%   end  
+%   
+%   %%% Offshore layer mid-depths and thicknesses
+%   Zmid0 = 0.5*(E0(1:Nlay)+E0(2:Nlay+1));
+%   H0 = E0(1:Nlay)-E0(2:Nlay+1) 
+%   E0
+%   
+%   %%% Reduced gravities at layer interfaces   
+%   gprime = g*rhoRange/(Nlay-1)/rho0; 
+%   gg = [g gprime*ones(1,Nlay-1)]; 
+  
+
+
+  %%% Option 2: uniform layer thicknesses
+  
+%   %%% Offshore layer thicknesses, interface elevations, and mid-depths
+%   H0 = H/Nlay*ones(1,Nlay);
+%   E0 = zeros(1,Nlay+1); 
+%   E0(2:Nlay+1) = -cumsum(H0);
+%   Zmid0 = 0.5*(E0(1:Nlay)+E0(2:Nlay+1));
+%   
+%   rhoMean = zeros(1,Nlay);
+%   for k=1:Nlay 
+%     idx = find((zz<E0(k))  & (zz>E0(k+1)));
+%     rhoMean(k) = mean(rhoRef(idx));
+%   end
+%   gg = [g g*diff(rhoMean)/rho0];
+%   diff(rhoMean)
+  
+  
+  
+  switch (config)
+  
+    case 'wind'
+    
+      %%% Fixed spacing down from surface
+      Hspace = 150;
+      if (Nlay*Hspace>H)
+        Hspace = H/Nlay;
+      end
+      E0 = [(0:-Hspace:-Hspace*(Nlay-1)) -H];
+      H0 = E0(1:Nlay)-E0(2:Nlay+1); 
+      rhoMean = zeros(1,Nlay);
+      for k=1:Nlay
+        idx = find((zz<E0(k))  & (zz>E0(k+1)));
+        rhoMean(k) = mean(rhoRef(idx));
+      end
+      gg = [g g*diff(rhoMean)/rho0];
+  
+    case 'rand' 
+  
+      %%% Shallow upper layer then fixed spacing  
+      E0 = 0;
+      if (Nlay >= 1)
+        E0 = [E0 -50];
+      end
+      if (Nlay >= 2)
+        E0 = [E0 -50-200*(1:Nlay-2)];
+      end  
+      E0 = [E0 (-H)];
+      H0 = E0(1:Nlay)-E0(2:Nlay+1);
+
+      rhoMean = zeros(1,Nlay);
+      for k=1:Nlay
+        idx = find((zz<E0(k))  & (zz>E0(k+1)));
+        rhoMean(k) = mean(rhoRef(idx));
+      end
+      gg = [g g*diff(rhoMean)/rho0];
+  
+  end    
+  
+  disp(H0)
+  disp(diff(rhoMean))
+
+
+
+
   
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%% BOTTOM TOPOGRAPHY %%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
   
-  %%% Put canyons in continental shelf
-  H_shelf = 500; %%% Continental shelf water column thickness  
-  W_canyons = 60*m1km;
-  H_canyons = 300;
-  X_canyons = [Lx/4 3*Lx/4];  
-  Z_shelf = -H_shelf * ones(Nx,Ny); %%% Continental shelf elevation
-  for m=1:length(X_canyons)
-    idx = (XX_h > X_canyons(m)-W_canyons/2) & (XX_h < X_canyons(m)+W_canyons/2);
-    Z_shelf(idx) = Z_shelf(idx) - H_canyons*0.5*(1+cos(2*pi*(XX_h(idx)-X_canyons(m))/(W_canyons))); 
-  end
-  
-  %%% Create continental slope
-%   Y_slope = 100*m1km; %%% Latitude of center of continental slope
-%   W_slope = 20*m1km;
-%   gam_h = 0.004;
-%   Y_scaled = (YY_h-Y_slope)/W_slope;     
-%   Z_slope = 0.5*(Z_shelf-H);
-%   H_slope = Z_shelf + H;
-%   etab = Z_slope + H_slope .* (0.25*sqrt((1-Y_scaled).^2 + 4*gam_h*Y_scaled.^2)-0.25*sqrt((1+Y_scaled).^2 +  4*gam_h*Y_scaled.^2)) / (1+4*gam_h)^(-1/2);
-  
+%   %%% Put canyons in continental shelf
+%   H_shelf = 100; %%% Continental shelf water column thickness  
+%   W_canyons = 60*m1km;
+%   H_canyons = 300;
+%   X_canyons = [Lx/4 3*Lx/4];  
+%   Z_shelf = -H_shelf * ones(Nx,Ny); %%% Continental shelf elevation
+%   for m=1:length(X_canyons)
+%     idx = (XX_h > X_canyons(m)-W_canyons/2) & (XX_h < X_canyons(m)+W_canyons/2);
+%     Z_shelf(idx) = Z_shelf(idx) - H_canyons*0.5*(1+cos(2*pi*(XX_h(idx)-X_canyons(m))/(W_canyons))); 
+%   end
+%   
+%   %%% Create continental slope
+% %   Y_slope = 100*m1km; %%% Latitude of center of continental slope
+% %   W_slope = 20*m1km;
+% %   gam_h = 0.004;
+% %   Y_scaled = (YY_h-Y_slope)/W_slope;     
+% %   Z_slope = 0.5*(Z_shelf-H);
+% %   H_slope = Z_shelf + H;
+% %   etab = Z_slope + H_slope .* (0.25*sqrt((1-Y_scaled).^2 + 4*gam_h*Y_scaled.^2)-0.25*sqrt((1+Y_scaled).^2 +  4*gam_h*Y_scaled.^2)) / (1+4*gam_h)^(-1/2);
+%   
+%   %%% Exponentials and linear slope with matched gradients
+%   smax = 1.5e-1; %%% Max slope steepness
+%   Ws_shelf = 2*m1km; %%% Reference slope exponential width for continental shelf
+%   Ws_deep = 12.5*m1km; %%% Reference slope exponential width for deep ocean
+%   Ys_shelf = 80*m1km; %%% Latitude of center of continental slope  
+%   
+%   %%% Matrices defining spatially-dependent geometric parameters
+%   Z_bot = -H * ones(Nx,Ny); %%% Flat reference ocean floor depth    
+%   Ws_upper = Ws_shelf * ones(Nx,Ny); %%% Exponential width of upper slope
+%   Ws_lower = Ws_deep * ones(Nx,Ny); %%% Exponential width of lower slope, reverts to Ws_shelf where ridge elevation is high
+%   Delta_upper = Ws_upper * smax; %%% Exponential elevation change of upper slope
+%   Delta_lower = Ws_lower * smax; %%% Exponential elevation change of lower slope
+%   Zs_upper = (Z_shelf - Delta_upper); %%% Elevation of upper/mid slope join
+%   Zs_lower = (Z_bot + Delta_lower); %%% Elevation of lower/mid slope join  
+%   Ys_upper = Ys_shelf; %%% Latitude of upper/mid slope join
+%   Ys_lower = Ys_upper + ((Zs_upper-Zs_lower)/smax); %%% Latitude of lower/mid slope join
+%   
+%   %%% Construct the bathymetry by joining exponential upper and lower
+%   %%% slopes with a linear mid-slope
+%   etab = zeros(Nx,Ny);
+%   idx_upper = YY_h < Ys_upper;
+%   idx_mid = (YY_h >= Ys_upper) & (YY_h < Ys_lower);
+%   idx_lower = YY_h > Ys_lower;    
+%   etab_upper = Z_shelf - Delta_upper .* exp((YY_h-Ys_upper)./Ws_upper);
+%   etab_mid = Zs_upper - smax.*(YY_h-Ys_upper);
+%   etab_lower = Z_bot + Delta_lower .* exp(-(YY_h-Ys_lower)./Ws_lower);
+%   etab(idx_upper) = etab_upper(idx_upper);
+%   etab(idx_mid) = etab_mid(idx_mid);
+%   etab(idx_lower) = etab_lower(idx_lower);
+       
+
   %%% Exponentials and linear slope with matched gradients
   smax = 1.5e-1; %%% Max slope steepness
-  Ws_shelf = 2*m1km; %%% Reference slope exponential width for continental shelf
-  Ws_deep = 12.5*m1km; %%% Reference slope exponential width for deep ocean
-  Ys_shelf = 80*m1km; %%% Latitude of center of continental slope  
+  Ws_shelf = 5*m1km; %%% Reference slope exponential width for continental shelf
+  Ws_deep = 20*m1km; %%% Reference slope exponential width for deep ocean
+  Ys_shelf = 75*m1km; %%% Latitude of center of continental slope
+  H_shelf = 100; %%% Continental shelf water column thickness  
+  DY_canyons = 25*m1km; %%% Meridional amplitude of slope canyons
+  N_canyons = 4; %%% Number of slope canyons
+  X_canyons = Lx/4-Lx/N_canyons/2; %%% Longitude of first slope canyon
+  H_ridge = 1000;
+  W_ridge = 50*m1km;
   
   %%% Matrices defining spatially-dependent geometric parameters
-  Z_bot = -H * ones(Nx,Ny); %%% Flat reference ocean floor depth    
+  Zbot = -H * ones(Nx,Ny); %%% Flat reference ocean floor depth    
+  Zshelf = -H_shelf * ones(Nx,Ny); %%% Continental shelf elevation
   Ws_upper = Ws_shelf * ones(Nx,Ny); %%% Exponential width of upper slope
   Ws_lower = Ws_deep * ones(Nx,Ny); %%% Exponential width of lower slope, reverts to Ws_shelf where ridge elevation is high
   Delta_upper = Ws_upper * smax; %%% Exponential elevation change of upper slope
   Delta_lower = Ws_lower * smax; %%% Exponential elevation change of lower slope
-  Zs_upper = (Z_shelf - Delta_upper); %%% Elevation of upper/mid slope join
-  Zs_lower = (Z_bot + Delta_lower); %%% Elevation of lower/mid slope join  
-  Ys_upper = Ys_shelf; %%% Latitude of upper/mid slope join
+  Zs_upper = (Zshelf - Delta_upper); %%% Elevation of upper/mid slope join
+  Zs_lower = (Zbot + Delta_lower); %%% Elevation of lower/mid slope join  
+  Ys_upper = Ys_shelf - DY_canyons*cos(2*pi*N_canyons*(XX_h-X_canyons)/Lx); %%% Latitude of upper/mid slope join
   Ys_lower = Ys_upper + ((Zs_upper-Zs_lower)/smax); %%% Latitude of lower/mid slope join
+
+  %%% Uncomment to print useful geometric scalars
+  Delta_upper(1,1)
+  Delta_lower(1,1)
+  Zs_upper(1,1)
+  Zs_lower(1,1)
+  Ys_upper(1,1)
+  Ys_lower(1,1)
   
   %%% Construct the bathymetry by joining exponential upper and lower
   %%% slopes with a linear mid-slope
@@ -176,31 +343,51 @@ function setparams (local_home_dir,run_name)
   idx_upper = YY_h < Ys_upper;
   idx_mid = (YY_h >= Ys_upper) & (YY_h < Ys_lower);
   idx_lower = YY_h > Ys_lower;    
-  etab_upper = Z_shelf - Delta_upper .* exp((YY_h-Ys_upper)./Ws_upper);
+  etab_upper = Zshelf - Delta_upper .* exp((YY_h-Ys_upper)./Ws_upper);
   etab_mid = Zs_upper - smax.*(YY_h-Ys_upper);
-  etab_lower = Z_bot + Delta_lower .* exp(-(YY_h-Ys_lower)./Ws_lower);
+  etab_lower = Zbot + Delta_lower .* exp(-(YY_h-Ys_lower)./Ws_lower);
   etab(idx_upper) = etab_upper(idx_upper);
   etab(idx_mid) = etab_mid(idx_mid);
   etab(idx_lower) = etab_lower(idx_lower);
-       
+  
+  %%% Add random topographic variations
+  etab_lambda = 100*m1km;
+  etab_E0 = 1;
+  etab_amp = 200;
+  etab_pert = genRandIC (etab_lambda,etab_E0,Nx,Ny,Ly);
+  etab_pert = etab_amp*etab_pert/sqrt(mean(etab_pert(:).^2));
+  etab_pert = etab_pert.*abs(etab)/H;
+  etab = etab + etab_pert;
+  
+  %%% Add ridge
+  etab_ridge = H_ridge * exp(-((XX_h-Lx/2)/W_ridge).^2);
+  etab_ridge = etab_ridge .* max(1-(etab+H)/H_ridge,0);
+  etab = etab + etab_ridge;
+  
   %%% Plot topography
-  figure(10);
+  fignum = fignum+1;
+  figure(fignum);
   surf(XX_h,YY_h,etab);
   shading interp;
   colorbar;
 %   plot(yy_h,etab(1,:))
+  pbaspect([2,1,1]);
 
-  figure(11)
+  fignum = fignum+1;
+  figure(fignum);
   plot(yy_h,etab(Nx/2,:));
   hold on;
   plot(yy_h,etab(Nx/4,:));
   hold off;
   
-  figure(12)
+  fignum = fignum+1;
+  figure(fignum);
   plot(yy_q(2:end-1),diff(etab(Nx/2,:))/d);
   hold on;
   plot(yy_q(2:end-1),diff(etab(Nx/4,:))/d);
   hold off;
+  
+  
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%% OTHER PARAMETERS %%%%%%
@@ -209,33 +396,30 @@ function setparams (local_home_dir,run_name)
   %%% Set timestep based on full gravity wave speed, assuming a that the
   %%% absolute velocity never exceeds the gravity wave speed. Then correct
   %%% dt so that tmax is an integer number of time steps.  
-  c = calcWaveSpeed(H0,geff,useRL)
+  c = calcWaveSpeed(H0,gg,useRL)
   Umax = 3;  
   dt = 0.25*d/(c+Umax)  
-  Nt = ceil(tmax/dt)+1;      
-  H0
-  geff
+%   dt = 0.125*d/(c+Umax)  %%% For many-layer config
+  Nt = ceil(tmax/dt)+1;       
   
   %%% Set viscosityy  
-%   tau_diff = 2*t1day;
-%   tau_diff = 10*t1day/sqrt(alpha);  
-%   A2 = d^2/tau_diff;
   A2 = 0;
-%   A4 = d^4/tau_diff
-%   A4 = 0.01*d^3*Umax
-%   A4 = 0;
-%   A4grid = 0.1; %%% Grid viscosity (must be < 1, typically much less)
-%   A4 = 0.25*0.125*d^4/dt * A4grid
   A4 = 0;
   A4smag = 4;
 
- %%% Salmon layer thickness  
+  %%% Salmon layer thickness  
   %%% Chosen to satisfy Salmon's (2002) stability criterion, approximately.
-  %%% The prefactor has been chosen empirically.
-  h0 = 5;
+  switch (config)
+    case ('wind')
+      h0 = 3;
+    case 'rand'
+      h0 = 5;
+  end
+%   h0 = 3;  %%% For many-layer config
   hsml = 30;
   hbbl = 30;
-  hmin_surf = 10;
+  hmin_surf = 12; %%% Should be >> h0 to avoid forcing of very thin layers
+%   hmin_surf = 6;  %%% For many-layer config
   hmin_bot = 0;
         
          
@@ -244,8 +428,12 @@ function setparams (local_home_dir,run_name)
   PARAMS = addParameter(PARAMS,'Nx',Nx,PARM_INT);
   PARAMS = addParameter(PARAMS,'Ny',Ny,PARM_INT);
   PARAMS = addParameter(PARAMS,'dt',dt,PARM_REALF);
-  PARAMS = addParameter(PARAMS,'savefrequency',savefreq,PARM_REALF);
+  PARAMS = addParameter(PARAMS,'savefrequency',savefreq,PARM_REALF);  
   PARAMS = addParameter(PARAMS,'savefreqEZ',savefreqEZ,PARM_REALF);
+  PARAMS = addParameter(PARAMS,'savefreqAvg',savefreqAvg,PARM_REALF);
+  PARAMS = addParameter(PARAMS,'savefreqUMom',savefreqUMom,PARM_REALF);
+  PARAMS = addParameter(PARAMS,'savefreqVMom',savefreqVMom,PARM_REALF);
+  PARAMS = addParameter(PARAMS,'savefreqThic',savefreqThic,PARM_REALF);  
   PARAMS = addParameter(PARAMS,'tmax',tmax,PARM_REALF);
   PARAMS = addParameter(PARAMS,'restart',restart,PARM_INT);
   PARAMS = addParameter(PARAMS,'startIdx',startIdx,PARM_INT);
@@ -276,11 +464,14 @@ function setparams (local_home_dir,run_name)
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
   
   
-  %%% Background rotation rate
-  Omegaz = 0.5* (f0*ones(Nx+1,Ny+1) + beta*(YY_q-(Ly/2)));
+  %%% Background rotation rate  
+  Omegaz = 0.5 * (f0 + beta_x*(XX_q-Lx/2) + beta_y*(YY_q-Ly/2));
   
-
-
+  fignum = fignum+1;
+  figure(fignum);
+  pcolor(XX_q,YY_q,2*Omegaz);
+  shading interp;
+  colorbar;
   
 
   %%%%%%%%%%%%%%%%%%%%%%%
@@ -288,13 +479,69 @@ function setparams (local_home_dir,run_name)
   %%%%%%%%%%%%%%%%%%%%%%%
   
   %%% Zonal wind stress
-  Lwind = 200*m1km;
-  taux = tau0*sin(pi*YY_u/Lwind).^2 / rho0;
-  taux(YY_u>Lwind) = 0;
+%   Lwind = Ly-Lrelax;
+%   taux = tau0*sin(pi*YY_u/Lwind).^2 / rho0;  
+%   taux(YY_u>Lwind) = 0;
+
+%   Lwind = 50*m1km;
+  Lwind = 75*m1km;
+  taux = tau0*tanh(YY_u/Lwind).^2 / rho0;
+  
   if (go_west)
     taux = -taux;
   end
   
+  fignum = fignum+1;
+  figure(fignum);
+  plot(yy_h,taux(1,:));
+  title('Wind stress');
+  
+  
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%% ALONG-SHORE PRESSURE GRADIENT %%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  %%% Zonal baroropic forcing  
+  Fbaro_tot = Fbaro0*sin(pi*YY_u/Lwind).^2 / rho0;
+  Fbaro_tot(YY_u>Lwind) = 0;  
+  Fbaro = Fbaro_tot ./ repmat(abs(mean(etab,1)),[Nx 1]);
+  
+  fignum = fignum+1;
+  figure(fignum);
+  plot(yy_h,Fbaro(1,:));
+  title('Barotropic forcing');
+
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%% RELAXATION SETUP %%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  %%% Initialize with zero flow uniform layer thicknesses
+  uRelax = zeros(Nlay,Nx,Ny);
+  vRelax = zeros(Nlay,Nx,Ny);  
+  eRelax = repmat(reshape(E0(1:Nlay),[Nlay 1 1]),[1 Nx Ny]);
+  hRelax = repmat(reshape(H0,[Nlay 1 1]),[1 Nx Ny]);
+  
+  %%% Relaxation time scale
+  relTime = -ones(Nx,Ny);    
+  relTime(YY_h>Ly-Lrelax) = 1 ./ (1-(Ly-YY_h(YY_h>Ly-Lrelax))/Lrelax);
+  eTime = tRelax_h * repmat(reshape(relTime,[1 Nx Ny]),[Nlay 1 1]);
+  uTime = tRelax_u * repmat(reshape(relTime,[1 Nx Ny]),[Nlay 1 1]);
+  vTime = tRelax_v * repmat(reshape(relTime,[1 Nx Ny]),[Nlay 1 1]);
+  hTime = tRelax_h * relTime;
+  
+  fignum = fignum+1;
+  figure(fignum);
+  plot(YY_h(1,:),squeeze(eRelax(:,Nx/2,:)));
+  
+  fignum = fignum+1;
+  figure(fignum);
+  plot(YY_h(1,:),squeeze(eTime(:,Nx/2,:)));
+
+    
   
   
   
@@ -302,179 +549,141 @@ function setparams (local_home_dir,run_name)
   %%%%% INITIAL CONDITIONS %%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
-  %%% Set sea surface height
-  Rd = c/abs(f0)
-  lambdaK = 4*Rd;  
-  eta1 = (f0/g)*genRandIC(lambdaK,E0,Nx,Ny,Ly);
-  eta1 = (1 - exp(-(YY_h./(lambdaK)).^2)) .* (1 - exp(-((YY_h-Ly)./(lambdaK)).^2)) .* eta1;  
-  eta1 = eta1 + deta1*(YY_h-Ly/2)/Ly;
-  if (go_west)
-    eta1 = -eta1;
+  
+  %%% Initialize with zero flow
+  uu_init = uRelax*0;
+  vv_init = vRelax*0; 
+  
+  %%% Initialize Montgomery potential with reference values  
+  MM_init = zeros(Nlay,Nx,Ny);
+  for k=2:Nlay
+    MM_init(k,:,:) = MM_init(k-1,:,:) + gg(k)*E0(k);
+  end 
+     
+  %%% Compute and regularize interface depths prior to calculation of
+  %%% Salmon depths
+  hh_init = repmat(reshape(H0,[Nlay 1 1]),[1 Nx Ny]);
+  ee_init = zeros(Nlay,Nx,Ny);
+  ee_init(2:Nlay+1,:,:) = -cumsum(hh_init);
+  ee_init(Nlay+1,:,:) = etab;
+  for i=1:Nx
+    for j=1:Ny
+      for k=Nlay:-1:2
+        if (ee_init(k,i,j)<ee_init(k+1,i,j))
+          ee_init(k,i,j) = ee_init(k+1,i,j) + h0;
+        end
+      end
+    end
   end
-  if (use_three_layer)
-    eta2 = -H1 - (geff(1)/geff(2))*eta1;
-    eta3 = (-H1-H2)*ones(Nx,Ny);
-    h1 = -eta2;
-    h2 = eta2-eta3;
-    h3 = eta3-etab;
+  hh_init = ee_init(1:Nlay,:,:) - ee_init(2:Nlay+1,:,:);
+  
+  %%% Adjust layer thicknesses to account for incrops
+  hh_init = solveSalmonThicknesses (hh_init,etab,zeros(Nx,Ny),MM_init,gg,h0);   
+  
+  %%% Plot thicknesses
+  fignum = fignum+1;
+  figure(fignum);
+  plot(xx_h,hh_init(:,:,1));
+  title('Initial layer thicknesses');
+  
+  %%% Plot layer elevations
+  ee_init = zeros(Nlay+1,Nx,Ny);
+  ee_init(2:Nlay+1,:,:) = -cumsum(hh_init);  
+  fignum = fignum+1;
+  figure(fignum);
+  plot(xx_h,ee_init(:,:,1));
+  title('Initial layer interfaces');
+  
+  
+  
+  
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%% RANDOM FORCING SETUP %%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  
+  %%% Generate forcing mask in spectral space
+  k = [0:1:Nx/2-1,-Nx/2:1:-1]; %%% Zonal wavenumber
+  K_xk = 2*pi.*(k)./Lx;
+  l = [0:1:Ny/2-1,-Ny/2:1:-1]; %%% Meridional wavenumber
+  K_yl = 2*pi.*(l)./Ly;
+  [K_ykl,K_xkl] = meshgrid(K_yl, K_xk);
+  K = sqrt(K_xkl.^2 + K_ykl.^2); %%% Absolute wavenumber 
+  K_0 = 2*pi/lambdaK; %%% Most strongly forced wavenumber
+  W = K_0/8; %%% Exponential width of energy band in wavenumber space   
+  RF_mask_fft = exp(-((K-K_0)/W).^2);
+  RF_mask_fft = repmat(reshape(RF_mask_fft,[1 Nx Ny]),[Nlay 1 1]);
+    
+  %%% Generate forcing mask in real space
+  idx_south_zero = (yy_q(1:Ny) <= Ymin_RF);
+  idx_south_cos = (yy_q(1:Ny) <= Ymin_RF+Lramp_RF) & (yy_q(1:Ny) >= Ymin_RF);
+  idx_north_cos = (yy_q(1:Ny) >= Ymax_RF-Lramp_RF) & (yy_q(1:Ny) <= Ymax_RF);
+  idx_north_zero = (yy_q(1:Ny) >= Ymax_RF);
+  RF_mask_q = ones(Nlay,Nx,Ny);
+  if (~isempty(idx_south_zero))
+    RF_mask_q(:,:,idx_south_zero) = 0;
+  end
+  if (~isempty(idx_south_cos))    
+    RF_mask_q(:,:,idx_south_cos) = RF_mask_q(:,:,idx_south_cos) .* repmat(reshape(0.5.*(1+cos(pi*(YY_q(1:Nx,idx_south_cos)-Ymin_RF-Lramp_RF)/Lramp_RF)),[1 Nx sum(idx_south_cos)]),[Nlay 1 1]);
+  end
+  if (~isempty(idx_north_cos))
+    RF_mask_q(:,:,idx_north_cos) = RF_mask_q(:,:,idx_north_cos) .* repmat(reshape(0.5.*(1+cos(pi*(YY_q(1:Nx,idx_north_cos)-Ymax_RF-Lramp_RF)/Lramp_RF)),[1 Nx sum(idx_north_cos)]),[Nlay 1 1]);
+  end
+  if (~isempty(idx_north_zero))
+    RF_mask_q(:,:,idx_north_zero) = 0;
+  end 
+  
+  %%% Modify parameters depending on whether we want barotropic or
+  %%% baroclinc forcing
+  if (Nlay == 1)
+    useThicWeightedRF =  true; %%% Apply random forcing to momentum equation
   else
-    eta2 = -H1 - (geff(1)/geff(2))*eta1;    
-    h1 = -eta2;
-    h2 = eta2-etab;    
+    if (useBaroclinicForcing)
+      useThicWeightedRF = true;
+      RF_mask_q(2:Nlay,:,:) = 0;      
+    else    
+      %%% Apply the forcing to the velocity equation and divide the forcing 
+      %%% mask in real space by the water column thickness at each point.
+      %%% This ensures that the depth-integrated forcing, effectively
+      %%% sum_k h_ijk * mask_ij * F0 * curl Psi_ij, has a magnitude of F0.
+      useThicWeightedRF = false;      
+      for i=1:Nx
+        for j=1:Ny
+          RF_mask_q(:,i,j) = RF_mask_q(:,i,j) / (-etab(i,j));
+        end
+      end
+    end
   end
- 
-  %%% Plot layer interfaces
-  figure(1);
-  contourf(XX_h,YY_h,eta1);
-  colorbar;  
-  figure(2);
-  contourf(XX_h,YY_h,eta2);
-  colorbar;    
   
-  %%% Set geostrophic along-slope velocity
-  eta1_mat1 = circshift(eta1, [0,-1]);  
-  eta1_mat2 = circshift(eta1, [1,-1]);
-  eta1_mat3 = circshift(eta1, [1,0]);
-  eta1_mat4 = circshift(eta1, [1,1]);
-  eta1_mat5 = circshift(eta1, [0,1]); 
-  u1 = -(g/f0*(1/d)) .* ((1/4).*(eta1_mat1+eta1_mat2+eta1_mat3+eta1) - (1/4).*(eta1+eta1_mat3+eta1_mat4+eta1_mat5));
-  u2 = 0*u1;
-  u3 = 0*u1;
   
-  %%% Quick fix for near-boundary points
-  u1(:,1) = u1(:,2);    
-  u1(:,Ny) = u1(:,Ny-1);
-  u2(:,1) = u2(:,2);
-  u2(:,Ny) = u2(:,Ny-1);
-  u3(:,1) = u3(:,2);
-  u3(:,Ny) = u3(:,Ny-1);
-  
-  %%% Plot along-slope velocity
-  figure(3);
-  contourf(XX_u,YY_u,u1);
-  colorbar;
-  
-  %%% Set geostrophic cross-slope velocity
-  eta1_mat6 = circshift(eta1, [-1,1]);
-  eta1_mat7 = circshift(eta1, [-1,0]);  
-  v1 = -(g/f0*(1/d)) .* ((1/4).*(eta1_mat3+eta1_mat4+eta1_mat5+eta1) - (1/4).*(eta1+eta1_mat5+eta1_mat6+eta1_mat7));
-  v2 = 0*v1;
-  v3 = 0*v1;
-  
-  %%% Plot cross-slope velocity
-  figure(4);
-  contourf(XX_v,YY_v,v1);     
-  colorbar;
-         
-  %%% Calculate boundary vorticities     
-  u1_mat5 = circshift(u1, [0,1]);
-  v1_mat3 = circshift(v1, [1,0]);
-  zeta1 = zeros(Nx+1,Ny+1);
-  zeta1(1:Nx,1:Ny) = (v1-v1_mat3)./d - (u1-u1_mat5)./d;  
-  zeta1(:,1) = 0;
-  zeta1(:,end) = 0;
-  
-  %%% Plot vorticity
-  figure(5);  
-  contourf(XX_q/1000,YY_q/1000,zeta1/abs(f0));   
-  colorbar;
-  colormap redblue;
-  
-  %%% Calculate kinetic energy of initial state
-  u_mat7 = circshift(u1, [-1,0]);
-  v_mat1 = circshift(v1, [0,-1]);
-  %KE = 1/2*d*d.*(zeros(Nx, Ny)-etab).*((u.^2+u_mat7.^2)./2 + (v.^2+v_mat1.^2)./2);
-  KE = (1/2).*((u1.^2+u_mat7.^2)./2 + (v1.^2+v_mat1.^2)./2);
-  meanE = (1/(Nx*Ny))*sum(sum(KE))
-  
-  %%% Plot fourier transform of Kinetic Energy
-  vfft = fft2(v1);
-  ufft = fft2(u1);   
-  KEfft = vfft.^2 + ufft.^2;  
-  figure(6);
-  [p,q] =contourf(real(KEfft),20);
-  colorbar;     
-  
-  %%% Apply the same initial velocity profiles in each layer
-  uu = zeros(Nlay,Nx,Ny);
-  uu(1,:,:) = u1;
-  uu(2,:,:) = u2;
-  if (use_three_layer)
-    uu(3,:,:) = u3;
-  end
-  vv = zeros(Nlay,Nx,Ny);
-  vv(1,:,:) = v1;
-  vv(2,:,:) = v2;
-  if (use_three_layer)
-    vv(3,:,:) = v3;
-  end
-  hh = zeros(Nlay,Nx,Ny);
-  hh(1,:,:) = h1;
-  hh(2,:,:) = h2;  
-  if (use_three_layer)
-    hh(3,:,:) = h3;  
-  end
-   
-  %%% Plot initial layer thickness
-  figure(7);
-  plot(xx_h,squeeze(hh(2,:,round(Ny/2))));
+  fignum = fignum+1;
+  figure(fignum);
+  plot(yy_q(1:Ny),squeeze(RF_mask_q(:,1,:)));
 
+
+  %%% Add scalar parameters
+  PARAMS = addParameter(PARAMS,'useRandomForcing',useRandomForcing,PARM_INT);
+  PARAMS = addParameter(PARAMS,'useThicWeightedRF',useThicWeightedRF,PARM_INT);
+  PARAMS = addParameter(PARAMS,'RF_F0_rot',RF_F0_rot,PARM_REALF);
+  PARAMS = addParameter(PARAMS,'RF_tau',RF_tau,PARM_REALF);
+
+  %%% Add matrix parameters
+  RF_fftMaskFile = 'RF_fftMaskFile.dat';
+  writeDataFile(fullfile(local_run_dir,RF_fftMaskFile),RF_mask_fft);
+  PARAMS = addParameter(PARAMS,'RF_fftMaskFile',RF_fftMaskFile,PARM_STR);  
+  RF_rotMaskFile = 'RF_rotMaskFile.dat';
+  writeDataFile(fullfile(local_run_dir,RF_rotMaskFile),RF_mask_q);
+  PARAMS = addParameter(PARAMS,'RF_rotMaskFile',RF_rotMaskFile,PARM_STR);
   
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %%%%% RELAXATION SETUP %%%%%
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
-  %%% Relaxation targets for layer thicknesses
-  h1Relax = 0*h1;
-  h2Relax = 0*h2;   
-  h1Relax(YY_h<Ly/2) = - eta_south(1);
-  h1Relax(YY_h>=Ly/2) = - eta_north(1);  
-  if (Nlay == 2)
-    h2Relax(YY_h<Ly/2) = eta_south(1) - etab(YY_h<Ly/2);
-    h2Relax(YY_h>=Ly/2) = eta_north(1) - etab(YY_h>=Ly/2);      
-    h2Relax((YY_h<Ly/2) & ((XX_h>3*Lx/4) | (XX_h<Lx/4))) = eta_south_dense(1) - etab((YY_h<Ly/2) & ((XX_h>3*Lx/4) | (XX_h<Lx/4)));
-  end
-  if (Nlay == 3)
-    h3Relax = 0*h3; 
-    h2Relax(YY_h<Ly/2) = eta_south(1) - eta_south(2);
-    h2Relax(YY_h>=Ly/2) = eta_north(1) - eta_north(2);  
-    h3Relax(YY_h<Ly/2) = eta_south(2) - etab(YY_h<Ly/2);
-    h3Relax(YY_h>=Ly/2) = eta_north(2) - etab(YY_h>=Ly/2);
-  end  
   
-  %%% Relaxation time scale
-%   hTime = -ones(Nx,Ny);  
-%   hTime(YY_h<Lrelax) = tRelax_h ./ (1-YY_h(YY_h<Lrelax)/Lrelax);
-%   hTime = tRelax_h ./ ( exp(-(YY_h/(Lrelax/2)).^2) .* exp(-((XX_h-Xrelax)/Wrelax).^2) );
-  XX_dense = XX_h;
-  XX_dense(XX_dense>Lx/2) = XX_dense(XX_dense>Lx/2) - Lx;
-  hTime = tRelax_h ./ ( exp(-(YY_h/(Lrelax/2)).^2) .* (exp(-((XX_h-Xrelax)/Wrelax).^2) + exp(-((XX_dense-Xrelax_dense)/Wrelax).^2)) );
-  hTime(YY_h>Lrelax) = -1;
-  hTime(YY_h>Ly-Lrelax) = tRelax_h ./ (1-(Ly-YY_h(YY_h>Ly-Lrelax))/Lrelax);
   
-  figure(99)
-  plot(YY_h(1,:),h1Relax(Nx/2,:));
-  hold on;
-  plot(YY_h(1,:),h2Relax(Nx/2,:));
-  hold off;
   
-  figure(98)
-  plot(XX_h(:,1),h2Relax(:,1));
   
-  figure(100);
-  semilogy(YY_h(Nx/2,:),hTime(Nx/2,:)/t1year);
   
-  figure(101);
-  semilogy(XX_h(:,1),hTime(:,1)/t1year);
   
-  %%% Create input matrices
-  hRelax = zeros(Nlay,Nx,Ny);
-  hRelax(1,:,:) = h1Relax;
-  hRelax(2,:,:) = h2Relax;
-  if (Nlay == 3)    
-    hRelax(3,:,:) = h3Relax;
-  end
-  
+
   
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -483,16 +692,17 @@ function setparams (local_home_dir,run_name)
   
   %%% Initial h 
   hInitFile = 'hInit.dat';
-  writeDataFile(fullfile(local_run_dir,hInitFile),hh);
+  writeDataFile(fullfile(local_run_dir,hInitFile),hh_init);
   PARAMS = addParameter(PARAMS,'hInitFile',hInitFile,PARM_STR);  
   
   %%% Initial u  
   uInitFile = 'uInit.dat';
-  writeDataFile(fullfile(local_run_dir,uInitFile),uu);
+  writeDataFile(fullfile(local_run_dir,uInitFile),uu_init);
   PARAMS = addParameter(PARAMS,'uInitFile',uInitFile,PARM_STR); 
+  
   %%% Initial v
   vInitFile = 'vInit.dat';
-  writeDataFile(fullfile(local_run_dir,vInitFile),vv);
+  writeDataFile(fullfile(local_run_dir,vInitFile),vv_init);
   PARAMS = addParameter(PARAMS,'vInitFile',vInitFile,PARM_STR);  
   
   %%% Bathymetry
@@ -507,7 +717,7 @@ function setparams (local_home_dir,run_name)
   
   %%% Reduced gravity
   gFile = 'gg.dat';          
-  writeDataFile(fullfile(local_run_dir,gFile),geff);
+  writeDataFile(fullfile(local_run_dir,gFile),gg);
   PARAMS = addParameter(PARAMS,'gFile',gFile,PARM_STR);
 
   %%% Wind stress
@@ -515,15 +725,50 @@ function setparams (local_home_dir,run_name)
   writeDataFile(fullfile(local_run_dir,tauxFile),taux);
   PARAMS = addParameter(PARAMS,'tauxFile',tauxFile,PARM_STR);
   
-  %%% Relaxation values for h 
-  hRelaxFile = 'hRelax.dat';
-  writeDataFile(fullfile(local_run_dir,hRelaxFile),hRelax);
-  PARAMS = addParameter(PARAMS,'hRelaxFile',hRelaxFile,PARM_STR);  
+  %%% Along-shore pressure gradient
+  FbaroXfile = 'Fbaro_x.dat';          
+  writeDataFile(fullfile(local_run_dir,FbaroXfile),Fbaro);
+  PARAMS = addParameter(PARAMS,'FbaroXFile',FbaroXfile,PARM_STR);
   
-  %%% Relaxation timescale for h  
-  hTimeFile = 'hTime.dat';
-  writeDataFile(fullfile(local_run_dir,hTimeFile),hTime);
-  PARAMS = addParameter(PARAMS,'hTimeFile',hTimeFile,PARM_STR);  
+  %%% Relaxation values for u
+  uRelaxFile = 'uRelax.dat';
+  writeDataFile(fullfile(local_run_dir,uRelaxFile),uRelax);
+  PARAMS = addParameter(PARAMS,'uRelaxFile',uRelaxFile,PARM_STR);  
+  
+  %%% Relaxation timescale for u  
+  uTimeFile = 'uTime.dat';
+  writeDataFile(fullfile(local_run_dir,uTimeFile),uTime);
+  PARAMS = addParameter(PARAMS,'uTimeFile',uTimeFile,PARM_STR); 
+  
+  %%% Relaxation values for v
+  vRelaxFile = 'vRelax.dat';
+  writeDataFile(fullfile(local_run_dir,vRelaxFile),vRelax);
+  PARAMS = addParameter(PARAMS,'vRelaxFile',vRelaxFile,PARM_STR);  
+  
+  %%% Relaxation timescale for v  
+  vTimeFile = 'vTime.dat';
+  writeDataFile(fullfile(local_run_dir,vTimeFile),vTime);
+  PARAMS = addParameter(PARAMS,'vTimeFile',vTimeFile,PARM_STR); 
+  
+  %%% Relaxation values for eta
+  eRelaxFile = 'eRelax.dat';
+  writeDataFile(fullfile(local_run_dir,eRelaxFile),eRelax);
+  PARAMS = addParameter(PARAMS,'eRelaxFile',eRelaxFile,PARM_STR);  
+  
+  %%% Relaxation timescale for eta
+  eTimeFile = 'eTime.dat';
+  writeDataFile(fullfile(local_run_dir,eTimeFile),eTime);
+  PARAMS = addParameter(PARAMS,'eTimeFile',eTimeFile,PARM_STR);  
+  
+%   %%% Relaxation values for h
+%   hRelaxFile = 'hRelax.dat';
+%   writeDataFile(fullfile(local_run_dir,hRelaxFile),hRelax);
+%   PARAMS = addParameter(PARAMS,'hRelaxFile',hRelaxFile,PARM_STR);  
+%   
+%   %%% Relaxation timescale for h
+%   hTimeFile = 'hTime.dat';
+%   writeDataFile(fullfile(local_run_dir,hTimeFile),hTime);
+%   PARAMS = addParameter(PARAMS,'hTimeFile',hTimeFile,PARM_STR);  
 
   %%% Create the input parameter file
   writeParamFile(pfname,PARAMS);      

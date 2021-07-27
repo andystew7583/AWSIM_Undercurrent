@@ -242,8 +242,8 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         colorbar;
         title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']));
         colormap redblue;        
-%         caxis([-max(max(abs(uu))) max(max(abs(uu)))]);
-        caxis([-.1 .1]);
+        caxis([-max(max(abs(uu))) max(max(abs(uu)))]);
+%         caxis([-.1 .1]);
         
       %%% Plot meridional velocity
       case 'v'
@@ -337,7 +337,9 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         end                
     
         %%% Make the plot
-        plot(yy_h, squeeze(mean(eta,1)));                
+%         plot(yy_h, squeeze(mean(eta,1)));     
+%         plot(yy_h,squeeze(eta(Nx/2,:,:)));
+        plot(yy_h,squeeze(eta(Nx/4,:,:)));
         title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']));        
         xlabel('x');
         ylabel('z');        
@@ -383,7 +385,7 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         p = surface(XX_h/1000,YY_h/1000,eta_plot,Ro);
         p.FaceColor = 'texturemap';
         colormap(cmocean('balance'));
-        caxis([-.3 .3]);
+        caxis([-.5 .5]);
         p.EdgeColor = 'none';         
         alpha(p,0.7);
         hold on;
