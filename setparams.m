@@ -133,9 +133,12 @@ function setparams (local_home_dir,run_name)
   %%% Grids
   switch (config)
     case 'wind'
-      Nlay = 7;
-    case 'rand'
+%       Nlay = 7;
+%       Nlay = 3;
       Nlay = 4;
+    case 'rand'
+%       Nlay = 4;
+      Nlay = 3;
   end
   Ny = N;  
   d = Ly/Ny;  
@@ -201,47 +204,68 @@ function setparams (local_home_dir,run_name)
 %   diff(rhoMean)
   
   
-  
-  switch (config)
-  
-    case 'wind'
-    
-      %%% Fixed spacing down from surface
-      Hspace = 150;
-      if (Nlay*Hspace>H)
-        Hspace = H/Nlay;
-      end
-      E0 = [(0:-Hspace:-Hspace*(Nlay-1)) -H];
-      H0 = E0(1:Nlay)-E0(2:Nlay+1); 
-      rhoMean = zeros(1,Nlay);
-      for k=1:Nlay
-        idx = find((zz<E0(k))  & (zz>E0(k+1)));
-        rhoMean(k) = mean(rhoRef(idx));
-      end
-      gg = [g g*diff(rhoMean)/rho0];
-  
-    case 'rand' 
-  
-      %%% Shallow upper layer then fixed spacing  
-      E0 = 0;
-      if (Nlay >= 1)
-        E0 = [E0 -50];
-      end
-      if (Nlay >= 2)
-        E0 = [E0 -50-200*(1:Nlay-2)];
-      end  
-      E0 = [E0 (-H)];
-      H0 = E0(1:Nlay)-E0(2:Nlay+1);
 
-      rhoMean = zeros(1,Nlay);
-      for k=1:Nlay
-        idx = find((zz<E0(k))  & (zz>E0(k+1)));
-        rhoMean(k) = mean(rhoRef(idx));
-      end
-      gg = [g g*diff(rhoMean)/rho0];
+
+
+
+  %%% Option 3: Shallow upper layer then fixed spacing    
+%   switch (config)
+%   
+%     case 'wind'
+%     
+%       %%% Fixed spacing down from surface
+% %       Hupper = 150; %%% For 7-layer case
+% %       Hinner = 150;
+%       Hupper = 250; %%% For 3-layer case
+%       Hinner = 400;
+% 
+%     case 'rand' 
+%       
+%       Hupper = 50;
+% %       Hinner = 200; %%% For 4-layer case
+%       Hinner = 400; %%% For 3-layer case
+%   
+%   end    
+%    
+%   E0 = 0;
+%   if (Nlay >= 1)
+%     E0 = [E0 -Hupper];
+%   end
+%   if (Nlay >= 2)
+%     E0 = [E0 -Hupper-Hinner*(1:Nlay-2)];
+%   end  
+%   E0 = [E0 (-H)];
+%   H0 = E0(1:Nlay)-E0(2:Nlay+1);
+% 
+%   rhoMean = zeros(1,Nlay);
+%   for k=1:Nlay
+%     idx = find((zz<E0(k))  & (zz>E0(k+1)));
+%     rhoMean(k) = mean(rhoRef(idx));
+%   end
+%   gg = [g g*diff(rhoMean)/rho0];
   
-  end    
   
+  
+
+
+
+  %%% Option 4: Manual
+  
+  E0 = [0 -125 -250 -650 -H]; %%% For 4-layer case
+  H0 = E0(1:Nlay)-E0(2:Nlay+1);
+  rhoMean = zeros(1,Nlay);
+  for k=1:Nlay
+    idx = find((zz<E0(k))  & (zz>E0(k+1)));
+    rhoMean(k) = mean(rhoRef(idx));
+  end
+  gg = [g g*diff(rhoMean)/rho0];
+  
+  
+  
+  
+  
+  
+  %%% Show stratification
   disp(H0)
   disp(diff(rhoMean))
 
@@ -314,8 +338,8 @@ function setparams (local_home_dir,run_name)
   DY_canyons = 25*m1km; %%% Meridional amplitude of slope canyons
   N_canyons = 4; %%% Number of slope canyons
   X_canyons = Lx/4-Lx/N_canyons/2; %%% Longitude of first slope canyon
-  H_ridge = 1000;
-  W_ridge = 50*m1km;
+  H_ridge = 0; %%% Meridional ridge height
+  W_ridge = 50*m1km; %%% Zonal width of meridional ridge
   
   %%% Matrices defining spatially-dependent geometric parameters
   Zbot = -H * ones(Nx,Ny); %%% Flat reference ocean floor depth    
@@ -354,15 +378,20 @@ function setparams (local_home_dir,run_name)
   etab_lambda = 100*m1km;
   etab_E0 = 1;
   etab_amp = 200;
+%   etab_amp = 500;
   etab_pert = genRandIC (etab_lambda,etab_E0,Nx,Ny,Ly);
   etab_pert = etab_amp*etab_pert/sqrt(mean(etab_pert(:).^2));
   etab_pert = etab_pert.*abs(etab)/H;
+%   etab_pert = etab_pert/2-min(min(etab_pert));
+  etab_pert = etab_pert.*(abs(etab)/H).^2;  
   etab = etab + etab_pert;
   
   %%% Add ridge
-  etab_ridge = H_ridge * exp(-((XX_h-Lx/2)/W_ridge).^2);
-  etab_ridge = etab_ridge .* max(1-(etab+H)/H_ridge,0);
-  etab = etab + etab_ridge;
+  if (H_ridge > 0)
+    etab_ridge = H_ridge * exp(-((XX_h-Lx/2)/W_ridge).^2);
+    etab_ridge = etab_ridge .* max(1-(etab+H)/H_ridge,0);
+    etab = etab + etab_ridge;
+  end
   
   %%% Plot topography
   fignum = fignum+1;
@@ -398,8 +427,10 @@ function setparams (local_home_dir,run_name)
   %%% dt so that tmax is an integer number of time steps.  
   c = calcWaveSpeed(H0,gg,useRL)
   Umax = 3;  
-  dt = 0.25*d/(c+Umax)  
-%   dt = 0.125*d/(c+Umax)  %%% For many-layer config
+  dt = 0.25*d/(c+Umax)  %%% Default time step choice
+%   dt = 0.04*d/(c+Umax) %%% For thinner Salmon layers (h0=1)
+%   dt = 0.01*d/(c+Umax) %%% For even thinner Salmon layers (h0=0.5)
+%   dt = 0.001*d/(c+Umax) %%% For extremely thin Salmon layers (h0=0.1)
   Nt = ceil(tmax/dt)+1;       
   
   %%% Set viscosityy  
@@ -410,14 +441,17 @@ function setparams (local_home_dir,run_name)
   %%% Salmon layer thickness  
   %%% Chosen to satisfy Salmon's (2002) stability criterion, approximately.
   switch (config)
-    case ('wind')
+    case 'wind'
       h0 = 3;
+%       h0 = 1;
+%       h0 = 0.5;
+%       h0 = 0.1;
     case 'rand'
       h0 = 5;
   end
 %   h0 = 3;  %%% For many-layer config
-  hsml = 30;
-  hbbl = 30;
+  hsml = 50;
+  hbbl = 50;
   hmin_surf = 12; %%% Should be >> h0 to avoid forcing of very thin layers
 %   hmin_surf = 6;  %%% For many-layer config
   hmin_bot = 0;
@@ -478,14 +512,14 @@ function setparams (local_home_dir,run_name)
   %%%%% WIND STRESS %%%%%
   %%%%%%%%%%%%%%%%%%%%%%%
   
-  %%% Zonal wind stress
-%   Lwind = Ly-Lrelax;
-%   taux = tau0*sin(pi*YY_u/Lwind).^2 / rho0;  
-%   taux(YY_u>Lwind) = 0;
+  %%% Coast-localized wind
+  Lwind = 200*m1km;
+  taux = tau0*sin(pi*YY_u/Lwind).^2 / rho0;  
+  taux(YY_u>Lwind) = 0;
 
-%   Lwind = 50*m1km;
-  Lwind = 75*m1km;
-  taux = tau0*tanh(YY_u/Lwind).^2 / rho0;
+  %%% Realistic wind shape with coastal drop-off
+%   Lwind = 75*m1km;
+%   taux = tau0*tanh(YY_u/Lwind).^2 / rho0;
   
   if (go_west)
     taux = -taux;
@@ -589,11 +623,20 @@ function setparams (local_home_dir,run_name)
   %%% Plot layer elevations
   ee_init = zeros(Nlay+1,Nx,Ny);
   ee_init(2:Nlay+1,:,:) = -cumsum(hh_init);  
+  
   fignum = fignum+1;
   figure(fignum);
   plot(xx_h,ee_init(:,:,1));
   title('Initial layer interfaces');
+  xlabel('x');
+  ylabel('z');
   
+  fignum = fignum+1;
+  figure(fignum);
+  plot(yy_h,squeeze(ee_init(:,Nx/2,:)));
+  title('Initial layer interfaces');
+  xlabel('y');
+  ylabel('z');
   
   
   
