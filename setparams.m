@@ -46,7 +46,16 @@ function setparams (local_home_dir,run_name)
   PARAMS = {};
   
   %%% Grid resolution
-  N = 128;
+  N = 256;
+  switch (config)
+    case 'wind'
+%       Nlay = 7;
+%       Nlay = 3;
+      Nlay = 4;
+    case 'rand'
+      Nlay = 4;
+%       Nlay = 3;
+  end
   
   %%% Physical parameters
   f0 = 8e-5;                   %%% Coriolis parameter 
@@ -131,15 +140,6 @@ function setparams (local_home_dir,run_name)
   SOR_opt_freq = 1000; 
   
   %%% Grids
-  switch (config)
-    case 'wind'
-%       Nlay = 7;
-%       Nlay = 3;
-      Nlay = 4;
-    case 'rand'
-%       Nlay = 4;
-      Nlay = 3;
-  end
   Ny = N;  
   d = Ly/Ny;  
   Nx = round(Lx/d);
@@ -214,16 +214,16 @@ function setparams (local_home_dir,run_name)
 %     case 'wind'
 %     
 %       %%% Fixed spacing down from surface
-% %       Hupper = 150; %%% For 7-layer case
-% %       Hinner = 150;
-%       Hupper = 250; %%% For 3-layer case
-%       Hinner = 400;
+%       Hupper = 150; %%% For 7-layer case
+%       Hinner = 150;
+% %       Hupper = 250; %%% For 3-layer case
+% %       Hinner = 400;
 % 
 %     case 'rand' 
 %       
 %       Hupper = 50;
-% %       Hinner = 200; %%% For 4-layer case
-%       Hinner = 400; %%% For 3-layer case
+%       Hinner = 200; %%% For 4-layer case
+% %       Hinner = 400; %%% For 3-layer case
 %   
 %   end    
 %    
@@ -251,7 +251,7 @@ function setparams (local_home_dir,run_name)
 
   %%% Option 4: Manual
   
-  E0 = [0 -125 -250 -650 -H]; %%% For 4-layer case
+  E0 = [0 -125 -250 -550 -H]; %%% For 4-layer case
   H0 = E0(1:Nlay)-E0(2:Nlay+1);
   rhoMean = zeros(1,Nlay);
   for k=1:Nlay
@@ -442,12 +442,16 @@ function setparams (local_home_dir,run_name)
   %%% Chosen to satisfy Salmon's (2002) stability criterion, approximately.
   switch (config)
     case 'wind'
-      h0 = 3;
+      if (Ny==256)
+        h0 = 1.5;
+      else
+        h0 = 3;
+      end
 %       h0 = 1;
 %       h0 = 0.5;
 %       h0 = 0.1;
     case 'rand'
-      h0 = 5;
+      h0 = 5 * 128/Ny;
   end
 %   h0 = 3;  %%% For many-layer config
   hsml = 50;
@@ -540,12 +544,14 @@ function setparams (local_home_dir,run_name)
   %%% Zonal baroropic forcing  
   Fbaro_tot = Fbaro0*sin(pi*YY_u/Lwind).^2 / rho0;
   Fbaro_tot(YY_u>Lwind) = 0;  
-  Fbaro = Fbaro_tot ./ repmat(abs(mean(etab,1)),[Nx 1]);
+  Fbaro = Fbaro_tot ./ repmat(mean(-etab,1),[Nx 1]);
   
   fignum = fignum+1;
   figure(fignum);
   plot(yy_h,Fbaro(1,:));
-  title('Barotropic forcing');
+  title('Barotropic forcing, x = 0');
+  xlabel('y');
+  ylabel('m/s^2');
 
   
   
@@ -570,10 +576,16 @@ function setparams (local_home_dir,run_name)
   fignum = fignum+1;
   figure(fignum);
   plot(YY_h(1,:),squeeze(eRelax(:,Nx/2,:)));
+  title('Relaxation layer elevations');
+  xlabel('y')
+  xlabel('z');
   
-  fignum = fignum+1;
+  fignum = fignum+1; 
   figure(fignum);
   plot(YY_h(1,:),squeeze(eTime(:,Nx/2,:)));
+  title('Relaxation time scales');
+  xlabel('y');
+  ylabel('(s)')
 
     
   
@@ -700,9 +712,12 @@ function setparams (local_home_dir,run_name)
   end
   
   
+  %%% Make a plot
   fignum = fignum+1;
   figure(fignum);
   plot(yy_q(1:Ny),squeeze(RF_mask_q(:,1,:)));
+  xlabel('y');
+  title('Random forcing factor, x = 0');
 
 
   %%% Add scalar parameters

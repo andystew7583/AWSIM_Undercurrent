@@ -322,27 +322,56 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
       %%% Zonally-averaged isopycnals
       case 'i'
 
-        %%% Calculate layer surface height
+        %%% Calculate layer surface height and load zonal velocity        
         eta = zeros(Nx,Ny,Nlay+1);
         eta(:,:,Nlay+1) = hhb;
+        uu = zeros(Nx,Ny,Nlay);
         for k=Nlay:-1:1
 
           %%% Load kth layer thickness
           data_file = fullfile(dirpath,[OUTN_H,num2str(k-1),'_n=',num2str(n),'.dat']);
           hh = readOutputFile(data_file,Nx,Ny);    
           
+          data_file = fullfile(dirpath,[OUTN_U,num2str(k-1),'_n=',num2str(n),'.dat']);
+          uu(:,:,k) = readOutputFile(data_file,Nx,Ny);     
+          
           %%% Add layer thickness to eta
           eta(:,:,k) = eta(:,:,k+1) + hh;
           
         end                
-    
+        
+        %%% Create grid for slice contour plots
+        eps = 1; %%% Small distance by which to perturb plotting points away from actual isopycnal elevations
+        slice_idx = Nx/2;
+        % slice_idx = 3*Nx/8;
+        ZZ_slice = zeros(Ny,2*Nlay);
+        UU_slice = zeros(Ny,2*Nlay);
+        for k=1:Nlay
+          ZZ_slice(:,2*k-1) = squeeze(eta(slice_idx,:,k))-eps;
+          ZZ_slice(:,2*k) = squeeze(eta(slice_idx,:,k+1))+eps;
+          UU_slice(:,2*k-1) = squeeze(uu(slice_idx,:,k));
+          UU_slice(:,2*k) = squeeze(uu(slice_idx,:,k));
+        end
+        YY_slice = repmat(yy_h',[1 2*Nlay]);
+        
         %%% Make the plot
-%         plot(yy_h, squeeze(mean(eta,1)));     
-%         plot(yy_h,squeeze(eta(Nx/2,:,:)));
-        plot(yy_h,squeeze(eta(Nx/4,:,:)));
-        title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']));        
-        xlabel('x');
-        ylabel('z');        
+        pcolor(YY_slice,ZZ_slice,UU_slice);
+        shading interp
+        hold on;
+        plot(yy_h,squeeze(eta(slice_idx,:,:)),'Color',[.7 .7 .7]);
+        hold off;
+        colormap redblue(40)
+        colorbar;
+        caxis([-.2 .2])
+        set(gca,'XDir','reverse');
+    
+%         %%% Make the plot
+% %         plot(yy_h, squeeze(mean(eta,1)));     
+% %         plot(yy_h,squeeze(eta(Nx/2,:,:)));
+%         plot(yy_h,squeeze(eta(Nx/4,:,:)));
+%         title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']));        
+%         xlabel('x');
+%         ylabel('z');        
         
       %%% 3D isopycnals
       case 'i3d'
@@ -389,16 +418,18 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         p.EdgeColor = 'none';         
         alpha(p,0.7);
         hold on;
-        eta_plot = eta(:,:,3);
-        p = surface(XX_h/1000,YY_h/1000,eta_plot);
-        p.FaceColor = [48 129 238]/256;
-        p.EdgeColor = 'none';        
-        alpha(p,0.7);
+        for k = 3:Nlay
+          eta_plot = eta(:,:,k);
+          p = surface(XX_h/1000,YY_h/1000,eta_plot);
+          p.FaceColor = [48 129 238]/256;
+          p.EdgeColor = 'none';        
+          alpha(p,0.5);          
+        end
         p = surface(XX_h/1000,YY_h/1000,eta(:,:,Nlay+1));
         p.FaceColor = [139,69,19]/256;
         p.EdgeColor = 'none';          
         hold off;        
-        view(32,44);
+        view(122,20);
         lighting gouraud;
         camlight('headlight');        
         title(strcat(['t=',num2str(t/t1year,'%.2f'),' years']));        
@@ -407,7 +438,7 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         zlabel('z (m)');
         set(gca,'FontSize',16);
         set(gcf,'Color','w');        
-        
+        set(gca,'ZLim',[-4500 0]);
     end
     
              
