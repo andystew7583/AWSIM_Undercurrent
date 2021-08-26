@@ -13,10 +13,25 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 % run_name = 'test_undercurrent_LWF_tau0.05_Nc4_Hbbl50_Nlay4_Htop250';
 % run_name = 'test_undercurrent_LWF_tau0.05_Nc4_Hbbl50_Nlay7_Fbaro0.05';
 
-run_name = 'test_undercurrent_RF_F0.05_Nc4_Hbbl50';
+% run_name = 'test_undercurrent_RF_F0.05_Nc4_Hbbl50';
+% uc_layidx = 2; %%% Undercurrent layer
+% tmin = 5.05*t1year;
+% tmax = 15.05*t1year;
+
+% run_name = 'test_undercurrent_RF_F0.05_Nc4_weakshelfforcing';
+% uc_layidx = 2; %%% Undercurrent layer
+% tmin = 5.05*t1year;
+% tmax = 9.05*t1year;
+
+% run_name = 'test_undercurrent_RF_F0.5_Nc4';
+% uc_layidx = 2; %%% Undercurrent layer
+% tmin = 5.05*t1year;
+% tmax = 10.05*t1year;
+
+run_name = 'test_undercurrent_RF_F0.5_Nc4_baroclinic';
 uc_layidx = 2; %%% Undercurrent layer
 tmin = 5.05*t1year;
-tmax = 15.05*t1year;
+tmax = 10.05*t1year;
 
 % run_name = 'test_undercurrent_LWF_tau0.05_Nc4_Hbbl50_Nlay7';
 % uc_layidx = 3; %%% Undercurrent layer
@@ -38,8 +53,13 @@ write_figs = true;
 figdir = fullfile('plots',run_name);
 mkdir(figdir);
 
-%%% Define isobath grid
-dd = [110:10:3500]';
+%%% Define coordinate grid
+switch (coord_name)
+  case 'bathy'
+    dd = [110:10:3500]';   
+  case 'psi'
+    dd = [0.01:0.01:0.5 0.55:0.05:5];
+end
 Nd = length(dd);
 
 %%% Average u-momentum diagnostics  
@@ -80,6 +100,25 @@ VMom_diapycnal = rho0*do_avg(dirpath,OUTN_VMOM_WDIA,Nx,Ny,Nlay,n0_avg_hv,N_avg_h
 VMom_advection = VMom_PVadvection + VMom_KEgradient + VMom_dhdt;
 VMom_total = VMom_windStress+VMom_Montgomery+VMom_advection+VMom_quadBotDrag+VMom_hypervisc+VMom_relaxation+VMom_randomForcing+VMom_baroForcing+VMom_diapycnal;
 
+%%% Calculate streamfunctions
+hu = do_avg(dirpath,OUTN_HU_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
+Psi = zeros(Nx+1,Ny+1);
+Psi(1:Nx,2:Ny+1) = -cumsum(sum(hu,3)*dy,2);
+Psi(Nx+1,:) = Psi(1,:);
+Psi_uc = zeros(Nx+1,Ny+1);
+Psi_uc(1:Nx,2:Ny+1) = -cumsum(sum(hu(:,:,uc_layidx:end),3)*dy,2);
+Psi_uc(Nx+1,:) = Psi_uc(1,:);
+
+%%% Select variable whose isopleths we will use to average the circulation
+switch (coord_name)
+  case 'bathy'
+    coord_q = 0*hhb;
+    coord_q(:,1) = 0.5*(hhb(:,1)+hhb([Nx 1:Nx-1],1));
+    coord_q(:,2:Ny) = 0.25*(hhb(:,1:Ny-1)+hhb([Nx 1:Nx-1],1:Ny-1)+hhb(:,2:Ny)+hhb([Nx 1:Nx-1],2:Ny));
+  case 'psi'
+    coord_q = Psi_uc(1:Nx,1:Ny)/1e6;
+end
+
 %%% Calculate vorticity budget quantities
 curl_windStress = calc_curl(UMom_windStress,VMom_windStress,dx,dy);
 curl_quadBotDrag = calc_curl(UMom_quadBotDrag,VMom_quadBotDrag,dx,dy);
@@ -96,20 +135,20 @@ etab_q(:,1) = 0.5*(hhb(:,1)+hhb([Nx 1:Nx-1],1));
 etab_q(:,2:Ny) = 0.25*(hhb(:,1:Ny-1)+hhb([Nx 1:Nx-1],1:Ny-1)+hhb(:,2:Ny)+hhb([Nx 1:Nx-1],2:Ny));
 
 %%% Compute circulation tendencies along isobaths
-circ_windStress = calc_iso_circ(curl_windStress,dx,dy,dd,etab_q);
-circ_quadBotDrag = calc_iso_circ(curl_quadBotDrag,dx,dy,dd,etab_q);
-circ_Montgomery = calc_iso_circ(curl_Montgomery,dx,dy,dd,etab_q);
-circ_hypervisc = calc_iso_circ(curl_hypervisc,dx,dy,dd,etab_q);
-circ_advection = calc_iso_circ(curl_advection,dx,dy,dd,etab_q);
-circ_randomForcing = calc_iso_circ(curl_randomForcing,dx,dy,dd,etab_q);
-circ_baroForcing = calc_iso_circ(curl_baroForcing,dx,dy,dd,etab_q);
-circ_total = calc_iso_circ(curl_total,dx,dy,dd,etab_q);
+circ_windStress = calc_iso_circ(curl_windStress,dx,dy,dd,coord_q);
+circ_quadBotDrag = calc_iso_circ(curl_quadBotDrag,dx,dy,dd,coord_q);
+circ_Montgomery = calc_iso_circ(curl_Montgomery,dx,dy,dd,coord_q);
+circ_hypervisc = calc_iso_circ(curl_hypervisc,dx,dy,dd,coord_q);
+circ_advection = calc_iso_circ(curl_advection,dx,dy,dd,coord_q);
+circ_randomForcing = calc_iso_circ(curl_randomForcing,dx,dy,dd,coord_q);
+circ_baroForcing = calc_iso_circ(curl_baroForcing,dx,dy,dd,coord_q);
+circ_total = calc_iso_circ(curl_total,dx,dy,dd,coord_q);
 
 %%% Calculate contour lengths
-cntrlen = calc_iso_int(ones(Nx,Ny),dx,dy,dd,etab_q);
+cntrlen = calc_iso_int(ones(Nx,Ny),dx,dy,dd,coord_q);
 
 %%% Calculate mean latitude of each isobath
-y_avg = calc_iso_int (YY_q(1:Nx,1:Ny),dx,dy,dd,etab_q) ./ cntrlen;
+y_avg = calc_iso_int (YY_q(1:Nx,1:Ny),dx,dy,dd,coord_q) ./ cntrlen;
 
 
 
@@ -121,11 +160,16 @@ axlim_zon = 7e-2;
 axlim_iso = 5e-2;
 ylim_iso = [y_avg(1)/1000 100];
 ylim_zon = [0 350];
-d_levs = [110 150 200 400 1000 1500 2000 2500 3000 3500];
+switch (coord_name)
+  case 'bathy'
+    d_levs = [110 150 200 400 1000 1500 2000 2500 3000 3500];
+  case 'psi'
+    d_levs = [0.1 0.5 1 3 5];
+end
 d_idx = zeros(1,length(d_levs));
 d_labels = cell(1,length(d_levs));
 for m=1:length(d_levs)
-  d_idx(m) = find(dd==d_levs(m));
+  d_idx(m) = find(abs(dd-d_levs(m))<1e-15);
   d_labels{m} = num2str(d_levs(m));
 end
 fontsize = 14;

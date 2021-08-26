@@ -8,11 +8,11 @@ function setparams (local_home_dir,run_name)
   %%% Choose configuration
   %%% This affects the forcing that is permitted and the discretization in
   %%% the vertical.
-  config = 'wind';
-%   config = 'rand';
+%   config = 'wind';
+  config = 'rand';
   
   %%% Set true to take averaged diagnostics
-  full_diags = false;
+  full_diags = true;
 
   %%% Load constant parameters 
   constants;   
@@ -46,12 +46,12 @@ function setparams (local_home_dir,run_name)
   PARAMS = {};
   
   %%% Grid resolution
-  N = 256;
+  N = 128;
   switch (config)
     case 'wind'
-%       Nlay = 7;
+      Nlay = 7;
 %       Nlay = 3;
-      Nlay = 4;
+%       Nlay = 4;
     case 'rand'
       Nlay = 4;
 %       Nlay = 3;
@@ -100,9 +100,9 @@ function setparams (local_home_dir,run_name)
       RF_F0_rot = 0; %%% Random forcing amplitude (m^2/s^2)
     case 'rand'
       useRandomForcing = true;
-      RF_F0_rot = 0.05/rho0; %%% Random forcing amplitude (m^2/s^2)
+      RF_F0_rot = 0.75/rho0; %%% Random forcing amplitude (m^2/s^2)
   end  
-  useBaroclinicForcing = false; %%% Apply random forcing to top layer only  
+  useBaroclinicForcing = true; %%% Apply random forcing to near-surface layers only  
   RF_tau = 10*t1day; %%% Autocorrelation timescale  
   lambdaK = 80*m1km; %%% Peak energy input lengthscale for random forcing
   Ymin_RF = 0; %%% No random forcing below this latitude
@@ -207,58 +207,59 @@ function setparams (local_home_dir,run_name)
 
 
 
+ 
 
   %%% Option 3: Shallow upper layer then fixed spacing    
-%   switch (config)
-%   
-%     case 'wind'
-%     
-%       %%% Fixed spacing down from surface
-%       Hupper = 150; %%% For 7-layer case
-%       Hinner = 150;
-% %       Hupper = 250; %%% For 3-layer case
-% %       Hinner = 400;
-% 
-%     case 'rand' 
-%       
-%       Hupper = 50;
-%       Hinner = 200; %%% For 4-layer case
-% %       Hinner = 400; %%% For 3-layer case
-%   
-%   end    
-%    
-%   E0 = 0;
-%   if (Nlay >= 1)
-%     E0 = [E0 -Hupper];
-%   end
-%   if (Nlay >= 2)
-%     E0 = [E0 -Hupper-Hinner*(1:Nlay-2)];
-%   end  
-%   E0 = [E0 (-H)];
-%   H0 = E0(1:Nlay)-E0(2:Nlay+1);
-% 
-%   rhoMean = zeros(1,Nlay);
-%   for k=1:Nlay
-%     idx = find((zz<E0(k))  & (zz>E0(k+1)));
-%     rhoMean(k) = mean(rhoRef(idx));
-%   end
-%   gg = [g g*diff(rhoMean)/rho0];
+  switch (config)
   
-  
-  
+    case 'wind'
+    
+      %%% Fixed spacing down from surface
+      Hupper = 150; %%% For 7-layer case
+      Hinner = 150;
+%       Hupper = 250; %%% For 3-layer case
+%       Hinner = 400;
 
-
-
-  %%% Option 4: Manual
+    case 'rand' 
+      
+      Hupper = 50;
+      Hinner = 200; %%% For 4-layer case
+%       Hinner = 400; %%% For 3-layer case
   
-  E0 = [0 -125 -250 -550 -H]; %%% For 4-layer case
+  end    
+   
+  E0 = 0;
+  if (Nlay >= 1)
+    E0 = [E0 -Hupper];
+  end
+  if (Nlay >= 2)
+    E0 = [E0 -Hupper-Hinner*(1:Nlay-2)];
+  end  
+  E0 = [E0 (-H)];
   H0 = E0(1:Nlay)-E0(2:Nlay+1);
+
   rhoMean = zeros(1,Nlay);
   for k=1:Nlay
     idx = find((zz<E0(k))  & (zz>E0(k+1)));
     rhoMean(k) = mean(rhoRef(idx));
   end
   gg = [g g*diff(rhoMean)/rho0];
+  
+  
+  
+
+
+
+%   %%% Option 4: Manual
+%   
+%   E0 = [0 -125 -250 -550 -H]; %%% For 4-layer case
+%   H0 = E0(1:Nlay)-E0(2:Nlay+1);
+%   rhoMean = zeros(1,Nlay);
+%   for k=1:Nlay
+%     idx = find((zz<E0(k))  & (zz>E0(k+1)));
+%     rhoMean(k) = mean(rhoRef(idx));
+%   end
+%   gg = [g g*diff(rhoMean)/rho0];
   
   
   
@@ -427,7 +428,13 @@ function setparams (local_home_dir,run_name)
   %%% dt so that tmax is an integer number of time steps.  
   c = calcWaveSpeed(H0,gg,useRL)
   Umax = 3;  
-  dt = 0.25*d/(c+Umax)  %%% Default time step choice
+  switch (config)
+    case 'wind'
+      dt = 0.25*d/(c+Umax)  %%% Default time step choice
+    case 'rand'
+      dt = 0.25*d/(c+Umax)  %%% Default time step choice
+%       dt = 0.2*d/(c+Umax)  %%% Default time step choice
+  end  
 %   dt = 0.04*d/(c+Umax) %%% For thinner Salmon layers (h0=1)
 %   dt = 0.01*d/(c+Umax) %%% For even thinner Salmon layers (h0=0.5)
 %   dt = 0.001*d/(c+Umax) %%% For extremely thin Salmon layers (h0=0.1)
@@ -690,22 +697,25 @@ function setparams (local_home_dir,run_name)
   end 
   
   %%% Modify parameters depending on whether we want barotropic or
-  %%% baroclinc forcing
+  %%% baroclinic forcing
   if (Nlay == 1)
     useThicWeightedRF =  true; %%% Apply random forcing to momentum equation
   else
+    %%% Apply the forcing to the velocity equation and divide the forcing 
+    %%% mask in real space by the water column thickness at each point.
     if (useBaroclinicForcing)
-      useThicWeightedRF = true;
-      RF_mask_q(2:Nlay,:,:) = 0;      
+      %%% Apply forcing to near-surface layers only
+      useThicWeightedRF = false;
+      RF_mask_q(Nlay,:,:) = 0;      
+      RF_mask_q = RF_mask_q / H;
     else    
-      %%% Apply the forcing to the velocity equation and divide the forcing 
-      %%% mask in real space by the water column thickness at each point.
+      %%% Apply forcing to full water column depth
       %%% This ensures that the depth-integrated forcing, effectively
       %%% sum_k h_ijk * mask_ij * F0 * curl Psi_ij, has a magnitude of F0.
       useThicWeightedRF = false;      
       for i=1:Nx
         for j=1:Ny
-          RF_mask_q(:,i,j) = RF_mask_q(:,i,j) / (-etab(i,j));
+          RF_mask_q(:,i,j) = RF_mask_q(:,i,j) / H * (-H/etab(i,j)).^0;
         end
       end
     end
