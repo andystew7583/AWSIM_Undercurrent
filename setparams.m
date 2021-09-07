@@ -8,8 +8,8 @@ function setparams (local_home_dir,run_name)
   %%% Choose configuration
   %%% This affects the forcing that is permitted and the discretization in
   %%% the vertical.
-%   config = 'wind';
-  config = 'rand';
+  config = 'wind';
+%   config = 'rand';
   
   %%% Set true to take averaged diagnostics
   full_diags = true;
@@ -324,7 +324,7 @@ function setparams (local_home_dir,run_name)
 %   idx_lower = YY_h > Ys_lower;    
 %   etab_upper = Z_shelf - Delta_upper .* exp((YY_h-Ys_upper)./Ws_upper);
 %   etab_mid = Zs_upper - smax.*(YY_h-Ys_upper);
-%   etab_lower = Z_bot + Delta_lower .* exp(-(YY_h-Ys_lower)./Ws_lower);
+%   etab_lower = Z_bot + Delta_lower .* exp(-(YY_h-Ys_lower)./Ws_lower);a
 %   etab(idx_upper) = etab_upper(idx_upper);
 %   etab(idx_mid) = etab_mid(idx_mid);
 %   etab(idx_lower) = etab_lower(idx_lower);

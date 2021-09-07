@@ -429,9 +429,11 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         p.FaceColor = [139,69,19]/256;
         p.EdgeColor = 'none';          
         hold off;        
-        view(122,20);
+        view(100,30);
         lighting gouraud;
-        camlight('headlight');        
+        camlight(90,60);
+%         camlight(-45,60);
+%         camlight(180,60);        
         title(strcat(['t=',num2str(t/t1year,'%.2f'),' years']));        
         xlabel('x (km)');
         ylabel('y (km)');

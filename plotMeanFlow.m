@@ -21,8 +21,8 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 % tmin = 5.05*t1year;
 % tmax = 15.05*t1year;
 
-% run_name = 'test_undercurrent_RF_F0.05_Nc4_weakshelfforcing';
-% uc_layidx = 2; %%% Undercurrent layer
+% run_name = 'test_undercurrent_LWF_tau0.05_Nc4_Hbbl50_Nlay7_hires';
+% uc_layidx = 3; %%% Undercurrent layer
 % tmin = 5.05*t1year;
 % tmax = 9.05*t1year;
 
@@ -31,24 +31,24 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 % tmin = 5.05*t1year;
 % tmax = 10.05*t1year;
 
-run_name = 'test_undercurrent_RF_F0.5_Nc4_baroclinic';
-uc_layidx = 2; %%% Undercurrent layer
+% run_name = 'undercurrent_RF_F0.75_Nc4_Yc25';
+% uc_layidx = 2; %%% Undercurrent layer
+% tmin = 5.05*t1year;
+% tmax = 10.05*t1year;
+
+run_name = 'undercurrent_LWF_tau0.1_Nc4_Yc25';
+uc_layidx = 3; %%% Undercurrent layer
 tmin = 5.05*t1year;
 tmax = 10.05*t1year;
 
-% run_name = 'test_undercurrent_LWF_tau0.05_Nc4_Hbbl50_Nlay7';
+% run_name = 'undercurrent_LWF_tau0.025_Nc4_Yc25';
 % uc_layidx = 3; %%% Undercurrent layer
-% tmin = 5.05*t1year;
-% tmax = 10.05*t1year;
-
-% run_name = 'test_undercurrent_LWF_tau0.05_Nc4_Hbbl50_Nlay7_Fbaro0.05';
-% uc_layidx = 3; %%% Undercurrent layer
-% tmin = 5.05*t1year;
-% tmax = 10.05*t1year;
+% tmin = 10.05*t1year;
+% tmax = 15.05*t1year;
 
 %%% Define coordinate system for analysis
-% coord_name = 'bathy';
-coord_name = 'psi';
+coord_name = 'bathy';
+% coord_name = 'psi';
 
 %%% Load experiment parameters
 dirpath = fullfile(local_home_dir,run_name);
