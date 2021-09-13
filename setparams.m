@@ -3,14 +3,28 @@
 %%%
 %%% Configures a shelf/slope channel with wind and buoyancy forcing.
 %%% 
-function setparams (local_home_dir,run_name)
-
-  %%% Choose configuration
-  %%% This affects the forcing that is permitted and the discretization in
-  %%% the vertical.
-  config = 'wind';
-%   config = 'rand';
-  
+%%%
+%%% local_home_dir    Directory to hold simulation folder
+%%% run_name          Name of simulation
+%%% config            Choose configuration: 'wind' or 'rand'
+%%%                   This affects the forcing that is permitted and the 
+%%%                   discretization in the vertical.
+%%% grid_size         Dimensions of horizontal grid (reference value 128)
+%%% wind_stress       Max. retrograde surface wind stress in N/m^2
+%%%                   (reference value 0.05)
+%%% rand_force        Amplitude for depth-integrated random
+%%%                   forcing in N/m^2 (reference value 0.75)
+%%% num_canyons       Number of slope canyons (reference value 4)
+%%% amp_canyons       Cross-slope amplitude of canyons in km (reference value 25)
+%%% max_slope         Maximum contental slope steepness (reference value 0.15)
+%%% sb_width          Shelf break exponential width in km (reference value 5)
+%%% baro_force        Amplitude of depth-integrated prograde along-slope pressure
+%%%                   gradient forcing in N/m^2 (reference value 0.05)
+%%% drag_coeff        Frictional drag coefficient x 10^3, reference value 2
+%%% 
+function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
+          rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff)
+ 
   %%% Set true to take averaged diagnostics
   full_diags = true;
 
@@ -46,7 +60,7 @@ function setparams (local_home_dir,run_name)
   PARAMS = {};
   
   %%% Grid resolution
-  N = 128;
+  N = grid_size;
   switch (config)
     case 'wind'
       Nlay = 7;
@@ -67,15 +81,15 @@ function setparams (local_home_dir,run_name)
   Lx = 2*Ly;
   H = 4000;                     %%% Ocean depth  
   rb = 0;                    %%% Linear bottom drag
-  Cd = 2e-3;                %%% Quadratic bottom drag
+  Cd = drag_coeff * 1e-3;                %%% Quadratic bottom drag
   Cd_surf = 0e-3;           %%% Surface drag coefficient
   switch (config)
     case 'wind'
-      tau0 = 0.05;                  %%% Wind stress maximum    
-      Fbaro0 = 0; %0.01;                 %%% Maximum depth-integrated along-slope pressure gradient force
+      tau0 = wind_stress;                  %%% Wind stress maximum    
+      Fbaro0 = baro_force; %0.01;                 %%% Maximum depth-integrated along-slope pressure gradient force
     case 'rand'
       tau0 = 0;                  %%% Wind stress maximum    
-      Fbaro0 = 0;                 %%% Maximum depth-integrated along-slope pressure gradient force
+      Fbaro0 = baro_force;                 %%% Maximum depth-integrated along-slope pressure gradient force
   end
   go_west = true;              %%% Set true for westward flow - reverses wind stress and initial flow    
   tRelax_u = 1*t1day;         %%% Sponge relaxation time scales
@@ -100,7 +114,7 @@ function setparams (local_home_dir,run_name)
       RF_F0_rot = 0; %%% Random forcing amplitude (m^2/s^2)
     case 'rand'
       useRandomForcing = true;
-      RF_F0_rot = 0.75/rho0; %%% Random forcing amplitude (m^2/s^2)
+      RF_F0_rot = rand_force/rho0; %%% Random forcing amplitude (m^2/s^2)
   end  
   useBaroclinicForcing = true; %%% Apply random forcing to near-surface layers only  
   RF_tau = 10*t1day; %%% Autocorrelation timescale  
@@ -331,13 +345,13 @@ function setparams (local_home_dir,run_name)
        
 
   %%% Exponentials and linear slope with matched gradients
-  smax = 1.5e-1; %%% Max slope steepness
-  Ws_shelf = 5*m1km; %%% Reference slope exponential width for continental shelf
+  smax = max_slope; %%% Max slope steepness
+  Ws_shelf = sb_width*m1km; %%% Reference slope exponential width for continental shelf
   Ws_deep = 20*m1km; %%% Reference slope exponential width for deep ocean
   Ys_shelf = 75*m1km; %%% Latitude of center of continental slope
   H_shelf = 100; %%% Continental shelf water column thickness  
-  DY_canyons = 25*m1km; %%% Meridional amplitude of slope canyons
-  N_canyons = 4; %%% Number of slope canyons
+  DY_canyons = amp_canyons*m1km; %%% Meridional amplitude of slope canyons
+  N_canyons = num_canyons; %%% Number of slope canyons
   X_canyons = Lx/4-Lx/N_canyons/2; %%% Longitude of first slope canyon
   H_ridge = 0; %%% Meridional ridge height
   W_ridge = 50*m1km; %%% Zonal width of meridional ridge
@@ -407,7 +421,7 @@ function setparams (local_home_dir,run_name)
   figure(fignum);
   plot(yy_h,etab(Nx/2,:));
   hold on;
-  plot(yy_h,etab(Nx/4,:));
+  plot(yy_h,etab(3*Nx/8,:));
   hold off;
   
   fignum = fignum+1;
