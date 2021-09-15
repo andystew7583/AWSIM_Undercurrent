@@ -13,6 +13,7 @@ function calcMomBudget (local_home_dir,run_name,tmax,uc_layidx)
   %%% Load experiment parameters
   dirpath = fullfile(local_home_dir,run_name);
   loadParams;
+  rho0 = 1000;
 
   %%% Define coordinate grid
   switch (coord_name)
@@ -21,9 +22,11 @@ function calcMomBudget (local_home_dir,run_name,tmax,uc_layidx)
     case 'psi'
       dd = [0.01:0.01:0.5 0.55:0.05:5];
   end
-  Nd = length(dd);
+  Nd = length(dd); 
   
   %%% Average u-momentum diagnostics  
+  tmax = tmax + 0.05*t1year;
+  tmin = tmax - 5*t1year;
   UMom_PVadvection = rho0*do_avg(dirpath,OUTN_UMOM_Q,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
   UMom_Montgomery = rho0*do_avg(dirpath,OUTN_UMOM_GRADM,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
   UMom_KEgradient = rho0*do_avg(dirpath,OUTN_UMOM_GRADKE,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
@@ -112,11 +115,11 @@ function calcMomBudget (local_home_dir,run_name,tmax,uc_layidx)
   y_avg = calc_iso_int (YY_q(1:Nx,1:Ny),dx,dy,dd,coord_q) ./ cntrlen;
   
   save(fullfile('products',[run_name,'_momBalance.mat']), ...
-    'dd','Nd','coord_q', 'cntrlen','Psi_uc','y_avg', ...
+    'dd','coord_name','Nd','coord_q', 'cntrlen','Psi_uc','y_avg', ...
     'UMom_windStress','UMom_Montgomery','UMom_advection','UMom_quadBotDrag','UMom_hypervisc','UMom_relaxation','UMom_randomForcing','UMom_baroForcing','UMom_diapycnal','UMom_total', ...
     'VMom_windStress','VMom_Montgomery','VMom_advection','VMom_quadBotDrag','VMom_hypervisc','VMom_relaxation','VMom_randomForcing','VMom_baroForcing','VMom_diapycnal','VMom_total', ... 
     'curl_windStress','curl_Montgomery','curl_advection','curl_quadBotDrag','curl_hypervisc','curl_randomForcing','curl_baroForcing','curl_total', ...
-    'circ_windStress','circ_Montgomery','circ_advection','circ_quadBotDrag','circ_hypervisc','circ_randomForcing','circ_baroForcing','circ_total',);
+    'circ_windStress','circ_Montgomery','circ_advection','circ_quadBotDrag','circ_hypervisc','circ_randomForcing','circ_baroForcing','circ_total');
 
 end
 

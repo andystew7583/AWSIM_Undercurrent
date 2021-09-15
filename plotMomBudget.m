@@ -9,7 +9,7 @@
 local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Select model configuration and parameters
-config = 'rand';
+config = 'wind';
 grid_size = 128; %%% Default 128
 wind_stress = 0.05; %%% Default 0.05
 rand_force = 0.75; %%% Default 0.75
@@ -20,12 +20,21 @@ sb_width = 5; %%% Default 5
 baro_force = 0; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
+%%% Undercurrent layer
+switch (config)
+  case 'wind'
+    uc_layidx = 3;
+  case 'rand'
+    uc_layidx = 2;
+end
+
 %%% Generate simulation name
 run_name = constructRunName (config,grid_size,wind_stress, ...
           rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
 
 %%% Load along-isobath mean flow diagnostics
-load(fullfile('products',[run_name,'_momBudget.mat']));
+loadParams;
+load(fullfile('products',[run_name,'_momBalance.mat']));
 
 %%% For writing figures
 write_figs = true;

@@ -9,7 +9,7 @@
 local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Select model configuration and parameters
-config = 'rand';
+config = 'wind';
 grid_size = 128; %%% Default 128
 wind_stress = 0.05; %%% Default 0.05
 rand_force = 0.75; %%% Default 0.75
@@ -20,11 +20,21 @@ sb_width = 5; %%% Default 5
 baro_force = 0; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
+%%% Undercurrent layer
+switch (config)
+  case 'wind'
+    uc_layidx = 3;
+  case 'rand'
+    uc_layidx = 2;
+end
+
 %%% Generate simulation name
 run_name = constructRunName (config,grid_size,wind_stress, ...
           rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
 
 %%% Load along-isobath mean flow diagnostics
+loadParams;
+rho0 = 1000;
 load(fullfile('products',[run_name,'_meanFlow.mat']));
 
 %%% For writing figures
@@ -201,3 +211,148 @@ pcolor(XX_q/1000,YY_q/1000,Psi_uc/1e6);
 shading interp;
 colormap redblue;
 colorbar;
+
+figure(9);
+plot(y_avg/1000,EKE./h_avg);
+xlabel('Mean isobath offshore distance (km)');
+ylabel('EKE density (m^2/s^2)');
+set(gca,'XDir','reverse');
+set(gca,'XLim',ylim_iso);
+set(gca,'FontSize',fontsize);
+
+figure(10);
+plot(y_avg/1000,KE./h_avg);
+xlabel('Mean isobath offshore distance (km)');
+ylabel('TKE density (m^2/s^2)');
+set(gca,'XDir','reverse');
+set(gca,'XLim',ylim_iso);
+set(gca,'FontSize',fontsize);
+
+figure(11);
+plot(y_avg/1000,MKE./h_avg);
+xlabel('Mean isobath offshore distance (km)');
+ylabel('MKE density (m^2/s^2)');
+set(gca,'XDir','reverse');
+set(gca,'XLim',ylim_iso);
+set(gca,'FontSize',fontsize);
+
+
+
+
+
+
+
+
+%%% For momentum balance plots
+axlim_iso = 5e-2;
+
+figure(33);
+clf;
+set(gcf,'Position',framepos);
+axes('Position',axpos);
+plot(y_avg/1000,rho0*sum(circ_totalMomFlux,2)./cntrlen,'LineWidth',linewidth);
+hold on;
+plot(y_avg/1000,rho0*sum(circ_meanMomFlux,2)./cntrlen,'LineWidth',linewidth);
+plot(y_avg/1000,rho0*sum(circ_eddyMomFlux,2)./cntrlen,'LineWidth',linewidth);
+hold off;
+legend('Total','Mean','Eddy','Location','NorthWest');
+xlabel('Mean isobath offshore distance (km)');
+set(gca,'XDir','reverse');
+ylabel('N/m^2');
+set(gca,'YLim',[-axlim_iso axlim_iso]);
+set(gca,'XLim',ylim_iso);
+set(gca,'FontSize',fontsize);
+box off;
+ax1 = gca;
+ax2 = axes('Position',get(ax1,'Position'));
+plot(ax2,y_avg/1000,0*dd,'k--');
+set(ax2,'YAxisLocation','Right');
+set(ax2,'XAxisLocation','Top');
+set(ax2,'XDir','reverse');
+set(ax2,'Color','None');
+set(ax2,'YTick',[]);
+set(ax2,'XTick',y_avg(d_idx)/1000);
+set(ax2,'XTickLabel',d_labels);
+set(ax2,'YLim',[-axlim_iso axlim_iso]);
+set(ax2,'XLim',ylim_iso);
+set(ax2,'FontSize',fontsize);
+xlabel(ax2,'Isobath (m)');
+box off;
+title(['Along-isobath advective momentum forcing over full ocean depth']);
+if (write_figs)
+  print('-dpng','-r150',fullfile(figdir,'IsobathAdvForcing_FullDepth.png'));
+end
+
+figure(34);
+clf;
+set(gcf,'Position',framepos);
+axes('Position',axpos);
+plot(y_avg/1000,rho0*sum(circ_totalMomFlux(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
+hold on;
+plot(y_avg/1000,rho0*sum(circ_meanMomFlux(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
+plot(y_avg/1000,rho0*sum(circ_eddyMomFlux(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
+hold off;
+legend('Total','Mean','Eddy','Location','NorthWest');
+xlabel('Mean isobath offshore distance (km)');
+set(gca,'XDir','reverse');
+ylabel('N/m^2');
+set(gca,'YLim',[-axlim_iso axlim_iso]);
+set(gca,'XLim',ylim_iso);
+set(gca,'FontSize',fontsize);
+box off;
+ax1 = gca;
+ax2 = axes('Position',get(ax1,'Position'));
+plot(ax2,y_avg/1000,0*dd,'k--');
+set(ax2,'YAxisLocation','Right');
+set(ax2,'XAxisLocation','Top');
+set(ax2,'XDir','reverse');
+set(ax2,'Color','None');
+set(ax2,'YTick',[]);
+set(ax2,'XTick',y_avg(d_idx)/1000);
+set(ax2,'XTickLabel',d_labels);
+set(ax2,'YLim',[-axlim_iso axlim_iso]);
+set(ax2,'XLim',ylim_iso);
+set(ax2,'FontSize',fontsize);
+xlabel(ax2,'Isobath (m)');
+box off;
+title(['Along-isobath advective momentum forcing, layers 1-',num2str(uc_layidx-1)]);
+if (write_figs)
+  print('-dpng','-r150',fullfile(figdir,'IsobathAdvForcing_Surface.png'));
+end
+
+figure(35);
+clf;
+set(gcf,'Position',framepos);
+axes('Position',axpos);
+plot(y_avg/1000,rho0*sum(circ_totalMomFlux(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
+hold on;
+plot(y_avg/1000,rho0*sum(circ_meanMomFlux(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
+plot(y_avg/1000,rho0*sum(circ_eddyMomFlux(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
+hold off;
+legend('Total','Mean','Eddy','Location','NorthWest');
+xlabel('Mean isobath offshore distance (km)');
+set(gca,'XDir','reverse');
+ylabel('N/m^2');
+set(gca,'YLim',[-axlim_iso axlim_iso]);
+set(gca,'XLim',ylim_iso);
+set(gca,'FontSize',fontsize);
+box off;
+ax1 = gca;
+ax2 = axes('Position',get(ax1,'Position'));
+plot(ax2,y_avg/1000,0*dd,'k--');
+set(ax2,'YAxisLocation','Right');
+set(ax2,'XAxisLocation','Top');
+set(ax2,'XDir','reverse');
+set(ax2,'Color','None');
+set(ax2,'YTick',[]);
+set(ax2,'XTick',y_avg(d_idx)/1000);
+set(ax2,'XTickLabel',d_labels);
+set(ax2,'YLim',[-axlim_iso axlim_iso]);
+set(ax2,'XLim',ylim_iso);
+set(ax2,'FontSize',fontsize);
+xlabel(ax2,'Isobath (m)');
+box off;
+title(['Along-isobath advective momentum forcing, layers ',num2str(uc_layidx),'-',num2str(Nlay)]);
+if (write_figs)
+  print('-dpng','-r150',fullfile(figdir,'IsobathAdvForcing_Undercurrent.png'));
+end

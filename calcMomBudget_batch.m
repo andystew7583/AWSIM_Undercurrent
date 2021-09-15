@@ -4,6 +4,12 @@
 %%% Calculates along-isobath momentum budget diagnostics for all simulations.
 %%%
 
+%%% Load constant parameters
+constants;
+
+%%% Location of runs on file system
+local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
+
 %%% Load parameters for all simulations in the batch
 [is_wind_batch,grid_size_batch,wind_stress_batch, ...
   rand_force_batch,num_canyons_batch,amp_canyons_batch, ...
