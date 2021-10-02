@@ -24,43 +24,52 @@ function calcMomBudget (local_home_dir,run_name,tmax,uc_layidx)
   end
   Nd = length(dd); 
   
-  %%% Average u-momentum diagnostics  
+  %%% Define averaging period
   tmax = tmax + 0.05*t1year;
   tmin = tmax - 5*t1year;
-  UMom_PVadvection = rho0*do_avg(dirpath,OUTN_UMOM_Q,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_Montgomery = rho0*do_avg(dirpath,OUTN_UMOM_GRADM,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_KEgradient = rho0*do_avg(dirpath,OUTN_UMOM_GRADKE,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_dhdt = rho0*do_avg(dirpath,OUTN_UMOM_DHDT,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_hypervisc = rho0*do_avg(dirpath,OUTN_UMOM_A4,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_quadBotDrag = rho0*do_avg(dirpath,OUTN_UMOM_CDBOT,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_windStress = rho0*do_avg(dirpath,OUTN_UMOM_WIND,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_relaxation = rho0*do_avg(dirpath,OUTN_UMOM_RELAX,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_baroForcing = rho0*do_avg(dirpath,OUTN_UMOM_FBARO,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_randomForcing = rho0*do_avg(dirpath,OUTN_UMOM_RAND,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_diapycnal = rho0*do_avg(dirpath,OUTN_UMOM_WDIA,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % UMom_buoyForce = rho0*do_avg(dirpath,OUTN_UMOM_BUOY,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % UMom_linBotDrag = rho0*do_avg(dirpath,OUTN_UMOM_RDRAG,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % UMom_linSurfDrag = rho0*do_avg(dirpath,OUTN_UMOM_RSURF,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % UMom_quadSurfDrag = rho0*do_avg(dirpath,OUTN_UMOM_CDSURF,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  UMom_advection = UMom_PVadvection + UMom_KEgradient + UMom_dhdt; 
-  UMom_total = UMom_windStress+UMom_Montgomery+UMom_advection+UMom_quadBotDrag+UMom_hypervisc+UMom_relaxation+UMom_randomForcing+UMom_baroForcing+UMom_diapycnal;
+   
+  %%% Average u-momentum diagnostics  
+%   avg_iter_start = n0_avg_hu;
+%   avg_num_iters = N_avg_hu;
+%   avg_start_time = startTime;
+  avg_iter_start = 0;                    
+  avg_num_iters = N_avg_hu+n0_avg_hu;
+  avg_start_time = 0;
+  UMom_PVadvection = rho0*do_avg(dirpath,OUTN_UMOM_Q,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_Montgomery = rho0*do_avg(dirpath,OUTN_UMOM_GRADM,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_KEgradient = rho0*do_avg(dirpath,OUTN_UMOM_GRADKE,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_dhdt = rho0*do_avg(dirpath,OUTN_UMOM_DHDT,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_hypervisc = rho0*do_avg(dirpath,OUTN_UMOM_A4,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_quadBotDrag = rho0*do_avg(dirpath,OUTN_UMOM_CDBOT,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_windStress = rho0*do_avg(dirpath,OUTN_UMOM_WIND,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_relaxation = rho0*do_avg(dirpath,OUTN_UMOM_RELAX,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_baroForcing = rho0*do_avg(dirpath,OUTN_UMOM_FBARO,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_randomForcing = rho0*do_avg(dirpath,OUTN_UMOM_RAND,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time);
+  UMom_diapycnal = rho0*do_avg(dirpath,OUTN_UMOM_WDIA,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hu,tmin,tmax,avg_start_time); 
 
   %%% Average v-momentum diagnostics  
-  VMom_PVadvection = rho0*do_avg(dirpath,OUTN_VMOM_Q,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_Montgomery = rho0*do_avg(dirpath,OUTN_VMOM_GRADM,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_KEgradient = rho0*do_avg(dirpath,OUTN_VMOM_GRADKE,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_dhdt = rho0*do_avg(dirpath,OUTN_VMOM_DHDT,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_hypervisc = rho0*do_avg(dirpath,OUTN_VMOM_A4,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_quadBotDrag = rho0*do_avg(dirpath,OUTN_VMOM_CDBOT,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_windStress = rho0*do_avg(dirpath,OUTN_VMOM_WIND,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_relaxation = rho0*do_avg(dirpath,OUTN_VMOM_RELAX,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_baroForcing = rho0*do_avg(dirpath,OUTN_VMOM_FBARO,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_randomForcing = rho0*do_avg(dirpath,OUTN_VMOM_RAND,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  VMom_diapycnal = rho0*do_avg(dirpath,OUTN_VMOM_WDIA,Nx,Ny,Nlay,n0_avg_hv,N_avg_hv,dt_avg_hv,tmin,tmax,startTime);
-  % VMom_buoyForce = rho0*do_avg(dirpath,OUTN_VMOM_BUOY,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % VMom_linBotDrag = rho0*do_avg(dirpath,OUTN_VMOM_RDRAG,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % VMom_linSurfDrag = rho0*do_avg(dirpath,OUTN_VMOM_RSURF,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
-  % VMom_quadSurfDrag = rho0*do_avg(dirpath,OUTN_VMOM_CDSURF,Nx,Ny,Nlay,n0_avg_hu,N_avg_hu,dt_avg_hu,tmin,tmax,startTime);
+%   avg_iter_start = n0_avg_hv;
+%   avg_num_iters = N_avg_hv;
+%   avg_start_time = startTime;
+  avg_iter_start = 0;                    
+  avg_num_iters = N_avg_hu+n0_avg_hu;
+  avg_start_time = 0;
+  VMom_PVadvection = rho0*do_avg(dirpath,OUTN_VMOM_Q,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_Montgomery = rho0*do_avg(dirpath,OUTN_VMOM_GRADM,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_KEgradient = rho0*do_avg(dirpath,OUTN_VMOM_GRADKE,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_dhdt = rho0*do_avg(dirpath,OUTN_VMOM_DHDT,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_hypervisc = rho0*do_avg(dirpath,OUTN_VMOM_A4,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_quadBotDrag = rho0*do_avg(dirpath,OUTN_VMOM_CDBOT,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_windStress = rho0*do_avg(dirpath,OUTN_VMOM_WIND,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_relaxation = rho0*do_avg(dirpath,OUTN_VMOM_RELAX,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_baroForcing = rho0*do_avg(dirpath,OUTN_VMOM_FBARO,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_randomForcing = rho0*do_avg(dirpath,OUTN_VMOM_RAND,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  VMom_diapycnal = rho0*do_avg(dirpath,OUTN_VMOM_WDIA,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg_hv,tmin,tmax,avg_start_time);
+  
+  
+  %%% Composite diagnostics
+  UMom_advection = UMom_PVadvection + UMom_KEgradient + UMom_dhdt; 
+  UMom_total = UMom_windStress+UMom_Montgomery+UMom_advection+UMom_quadBotDrag+UMom_hypervisc+UMom_relaxation+UMom_randomForcing+UMom_baroForcing+UMom_diapycnal;
   VMom_advection = VMom_PVadvection + VMom_KEgradient + VMom_dhdt;
   VMom_total = VMom_windStress+VMom_Montgomery+VMom_advection+VMom_quadBotDrag+VMom_hypervisc+VMom_relaxation+VMom_randomForcing+VMom_baroForcing+VMom_diapycnal;
 

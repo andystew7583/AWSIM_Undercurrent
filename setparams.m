@@ -125,7 +125,7 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
   
   %%% Temporal parameters  
   if (full_diags)
-    tmax = 10*t1year;
+    tmax = 20*t1year;
   else
     tmax = 5*t1year;
   end

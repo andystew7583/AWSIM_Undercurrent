@@ -26,14 +26,22 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   %%% Average diagnostics
   tmax = tmax + 0.05*t1year;
   tmin = tmax - 5*t1year;
-  u = do_avg(dirpath,OUTN_U_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
-  v = do_avg(dirpath,OUTN_V_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
-  h = do_avg(dirpath,OUTN_H_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
-  hu = do_avg(dirpath,OUTN_HU_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
-  hv = do_avg(dirpath,OUTN_HV_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
-  huu = do_avg(dirpath,OUTN_HUU_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);
-  hvv = do_avg(dirpath,OUTN_HVV_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);  
-  huv = do_avg(dirpath,OUTN_HUV_AVG,Nx,Ny,Nlay,n0_avg,N_avg,dt_avg,tmin,tmax,startTime);  
+%   avg_iter_start = n0_avg;
+%   avg_num_iters = N_avg;
+%   avg_start_time = startTime;
+  avg_iter_start = 0;                    
+  avg_num_iters = N_avg+n0_avg;
+  avg_start_time = 0;
+  u = do_avg(dirpath,OUTN_U_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  v = do_avg(dirpath,OUTN_V_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  h = do_avg(dirpath,OUTN_H_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  M = do_avg(dirpath,OUTN_M_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  hu = do_avg(dirpath,OUTN_HU_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  hv = do_avg(dirpath,OUTN_HV_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  huu = do_avg(dirpath,OUTN_HUU_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);
+  hvv = do_avg(dirpath,OUTN_HVV_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);  
+  huv = do_avg(dirpath,OUTN_HUV_AVG,Nx,Ny,Nlay,avg_iter_start,avg_num_iters,dt_avg,tmin,tmax,avg_start_time);  
+  
 
   %%% Calculate streamfunctions
   Psi = zeros(Nx+1,Ny+1);
@@ -117,6 +125,13 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
 
   
   
+  
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% Calculate advective forcing %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  
   %%% Calculate mean and eddy momentum fluxes
   huu_mean = hu.^2./h;
   hvv_mean = hv.^2./h;
@@ -148,6 +163,16 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   circ_totalMomFlux = calc_iso_circ(curl_totalMomFlux,dx,dy,dd,coord_q);
   circ_meanMomFlux = calc_iso_circ(curl_meanMomFlux,dx,dy,dd,coord_q);
   circ_eddyMomFlux = calc_iso_circ(curl_eddyMomFlux,dx,dy,dd,coord_q);
+  
+  
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% Calculate pressure forcing %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  %%% TODO decompose h grad M
+  
   
 
   save(fullfile('products',[run_name,'_meanFlow.mat']), ...

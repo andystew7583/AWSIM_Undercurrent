@@ -9,7 +9,7 @@
 local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Select model configuration and parameters
-config = 'rand';
+config = 'wind';
 grid_size = 128; %%% Default 128
 wind_stress = 0.05; %%% Default 0.05
 rand_force = 0.75; %%% Default 0.75

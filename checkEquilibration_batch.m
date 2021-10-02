@@ -49,12 +49,33 @@ for n=1:Nsims
   if (t(end)~=end_time*t1year)
     disp(['Mismatched end time for run: ',run_name]);
   end
-  start_time = end_time-5*t1year;
+  start_time = end_time*t1year-5*t1year;
   start_idx = find(t<=start_time,1,'last');
-  p = polyfit(t(start_idx:end),PE(start_idx:end)/sum(sum(-dx*dy*hhb)),1);
-  disp(['PE trend = ',num2str(p(1)*5*t1year,'%e')]);
-  p = polyfit(t(start_idx:end),KE(start_idx:end)/mean(KE(start_idx:end))*100,1);
-  disp(['KE trend = ',num2str(p(1)*5*t1year,'%.1f')]);
+  
+  %%% Construct a range of indices that creates a continuous time series
+  idx = start_idx:length(t);  %%% Default to all indices within the time range
+  m = 1;
+  %%% Loop through indices within the time range
+  while (m < length(idx))
+    m = m + 1;
+    if (t(idx(m)) < t(idx(m-1))) %%% Time goes backwards - indicates a restart      
+      restart_idx = find(t(1:idx(m-1)) < t(idx(m)),1,'last'); %%% Find the previous index in t that matches the restart time
+      idx_idx = find(idx == restart_idx); %%% Index within the index array of the restart time
+      idx(idx_idx+1:m-1) = []; %%% Remove the chunk of time that was re-run since the restart
+      m = idx_idx + 1; %%% Resume the loop, noting that now idx has changed size
+    end
+  end
+  
+  %%% Compute trends
+  linfit = polyfit(t(idx),PE(idx)/sum(sum(-dx*dy*hhb)),1);
+  disp(['PE trend = ',num2str(linfit(1)*5*t1year,'%e')]);
+  linfit = polyfit(t(idx),KE(idx)/mean(KE(idx))*100,1);
+  disp(['KE trend = ',num2str(linfit(1)*5*t1year,'%.1f')]);
+  [r,p] = corr(t(idx)',PE(idx)');
+  disp(['PE trend r-value = ',num2str(r)]);
+  [r,p] = corr(t(idx)',KE(idx)');
+  disp(['KE trend r-value = ',num2str(r)]);
+  
   
         
 end
