@@ -67,15 +67,13 @@ for n=1:Nsims
   end
   
   %%% Compute trends
-  linfit = polyfit(t(idx),PE(idx)/sum(sum(-dx*dy*hhb)),1);
-  disp(['PE trend = ',num2str(linfit(1)*5*t1year,'%e')]);
+  linfit = polyfit(t(idx),PE(idx)/mean(PE(idx)-PE(1))*100,1);
+  disp(['PE trend = ',num2str(linfit(1)*5*t1year,'%.1f')]);
   linfit = polyfit(t(idx),KE(idx)/mean(KE(idx))*100,1);
   disp(['KE trend = ',num2str(linfit(1)*5*t1year,'%.1f')]);
   [r,p] = corr(t(idx)',PE(idx)');
   disp(['PE trend r-value = ',num2str(r)]);
   [r,p] = corr(t(idx)',KE(idx)');
   disp(['KE trend r-value = ',num2str(r)]);
-  
-  
         
 end

@@ -8,15 +8,15 @@
 local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Select model configuration and parameters
-config = 'wind';
-grid_size = 128; %%% Default 128
+config = 'rand';
+grid_size = 256; %%% Default 128
 wind_stress = 0.05; %%% Default 0.05
 rand_force = 0.75; %%% Default 0.75
 num_canyons = 4; %%% Default 4
 amp_canyons = 25; %%% Default 25
 max_slope = 0.15; %%% Default 0.15
 sb_width = 5; %%% Default 5
-baro_force = 0.075; %%% Default 0
+baro_force = 0; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
 %%% Generate simulation name
