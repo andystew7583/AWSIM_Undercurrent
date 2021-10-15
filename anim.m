@@ -186,15 +186,16 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         
         %%% Calculate layer surface height
         eta = zeros(Nx,Ny,Nlay+1);
+        hh = zeros(Nx,Ny,Nlay);
         eta(:,:,Nlay+1) = hhb;        
         for k=Nlay:-1:1
 
           %%% Load kth layer thickness
           data_file = fullfile(dirpath,[OUTN_H,num2str(k-1),'_n=',num2str(n),'.dat']);
-          hh = readOutputFile(data_file,Nx,Ny);    
+          hh(:,:,k) = readOutputFile(data_file,Nx,Ny);    
           
           %%% Add layer thickness to eta
-          eta(:,:,k) = eta(:,:,k+1) + hh;
+          eta(:,:,k) = eta(:,:,k+1) + hh(:,:,k);
           
         end
         
@@ -211,6 +212,9 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         for k=2:layer
           pi = pi + gg(k)*eta(:,:,k);          
         end                
+        
+        gsum = sum(gg(1:layer));                
+        pi = pi - gsum/3 * h0^4./hh(:,:,layer).^3;
     
         %%% Make the plot
         pcolor(XX_h/1000,YY_h/1000,pi);

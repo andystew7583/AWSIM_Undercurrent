@@ -27,26 +27,60 @@ function fixSalmonLayers (src_home_dir, src_run_name, srcIter, dest_home_dir, de
   Ny_src = Ny;
   Nlay_src = Nlay;
   dirpath_src = dirpath;
-  etab_src = hhb;
+  etab_src = zeros(Nx+2,Ny+2);
+  etab_src(2:Nx+1,2:Ny+1) = hhb;
+  [xx_src yy_src XX_src YY_src] = createmesh(-0.5*dx,Lx+0.5*dx,Nx_src+2,-0.5*dy,Ly+0.5*dy,Ny_src+2); %%% Extended grid with ghost points for interpolation
   
   %%% Load source layer thicknesses and surface pressure
-  hh_src = zeros(Nx_src,Ny_src,Nlay_src);  
-  MM_src = zeros(Nx_src,Ny_src,Nlay_src);  
+  hh_src = zeros(Nlay_src,Nx_src+2,Ny_src+2);  
+  MM_src = zeros(Nlay_src,Nx_src+2,Ny_src+2);  
   data_file = fullfile(dirpath_src,createOutputFilename(OUTN_PI,srcIter,-1));
-  MM_src(:,:,1) = readOutputFile(data_file,Nx_src,Ny_src);      
+  MM_src(1,2:Nx+1,2:Ny+1) = readOutputFile(data_file,Nx_src,Ny_src);      
   for k=1:Nlay        
     data_file = fullfile(dirpath_src,createOutputFilename(OUTN_H,srcIter,k));
-    hh_src(:,:,k) = readOutputFile(data_file,Nx_src,N_srcy);    
+    hh_src(k,2:Nx+1,2:Ny+1) = readOutputFile(data_file,Nx_src,Ny_src);    
   end
   
+   %%% Fill in ghost points depending on boundary conditions
+  if (useWallNS)    
+    etab_src(:,1) = etab_src(:,2);
+    etab_src(:,Ny+2) = etab_src(:,Ny+1);
+    MM_src(1,:,1) = MM_src(1,:,2);
+    MM_src(1,:,Ny+2) = MM_src(1,:,Ny+1);
+    hh_src(:,:,1) = hh_src(:,:,2);
+    hh_src(:,:,Ny+2) = hh_src(:,:,Ny+1);    
+  else  
+    etab_src(:,1) = etab_src(:,Ny+1);
+    etab_src(:,Ny+2) = etab_src(:,2);
+    MM_src(1,:,1) = MM_src(1,:,Ny+1);
+    MM_src(1,:,Ny+2) = MM_src(1,:,2);
+    hh_src(:,:,1) = hh_src(:,:,Ny+1);
+    hh_src(:,:,Ny+2) = hh_src(:,:,2);
+  end    
+  if (useWallEW)    
+    etab_src(1,:) = etab_src(2,:);
+    etab_src(Nx+2,:) = etab_src(Nx+1,:);
+    MM_src(1,1,:) = MM_src(1,2,:);
+    MM_src(1,Nx+2,:) = MM_src(1,Nx+1,:);
+    hh_src(:,1,:) = hh_src(:,2,:);
+    hh_src(:,Nx+2,:) = hh_src(:,Nx+1,:);
+  else    
+    etab_src(1,:) = etab_src(Nx+1,:);
+    etab_src(Nx+2,:) = etab_src(2,:);
+    MM_src(1,1,:) = MM_src(1,Nx+1,:);
+    MM_src(1,Nx+2,:) = MM_src(1,2,:);
+    hh_src(:,1,:) = hh_src(:,Nx+1,:);
+    hh_src(:,Nx+2,:) = hh_src(:,2,:);
+  end   
+  
   %%% Construct source layer elevations
-  ee_init = zeros(Nlay_src,Nx_src,Ny_src);
-  ee_init(2:Nlay_src+1,:,:) = -cumsum(hh_init);
-  ee_init(Nlay_src+1,:,:) = etab_src;
+  ee_src = zeros(Nlay_src+1,Nx_src+2,Ny_src+2);
+  ee_src(2:Nlay_src+1,:,:) = -cumsum(hh_src);
+  ee_src(Nlay_src+1,:,:) = etab_src;
    
   %%% Construct source Montgomery potential everywhere
   for k = 2:Nlay_src
-    MM_src(:,:,k) = MM_src(:,:,k-1) + gg(k)*ee_init(:,:,k) - gsum_src(k) * h0_src.^4 ./ hh_init(:,:,k).^3;
+    MM_src(k,:,:) = MM_src(k-1,:,:) + gg(k)*ee_src(k,:,:) - gsum_src(k)/3 * h0_src.^4 ./ hh_src(k,:,:).^3;
   end
     
   %%% Load destination simulation parameters
@@ -62,15 +96,16 @@ function fixSalmonLayers (src_home_dir, src_run_name, srcIter, dest_home_dir, de
   Ny_dest = Ny;
   Nlay_dest = Nlay;
   dirpath_dest = dirpath;
-  etab_dest = hhb;
+  
   
   %%% Interpolate Montgomery potential onto destination grid
-  hh_dest = zeros(Nx_dest,Ny_dest,Nlay_dest);
-  MM_dest = zeros(Nx_dest,Ny_dest,Nlay_dest);
+  hh_dest = zeros(Nlay_dest,Nx_dest,Ny_dest);
+  MM_dest = zeros(Nlay_dest,Nx_dest,Ny_dest);
   for k=1:Nlay
-    hh_dest(:,:,k) = interp2(XX_src',YY_src',hh_src(:,:,k)',XX_dest',YY_dest','linear')';
-    MM_dest(:,:,k) = interp2(XX_src',YY_src',MM_src(:,:,k)',XX_dest',YY_dest','linear')';
+    hh_dest(k,:,:) = interp2(XX_src',YY_src',squeeze(hh_src(k,:,:))',XX_dest',YY_dest','linear')';    
+    MM_dest(k,:,:) = interp2(XX_src',YY_src',squeeze(MM_src(k,:,:))',XX_dest',YY_dest','linear')';    
   end
+  etab_dest = interp2(XX_src',YY_src',squeeze(etab_src(:,:))',XX_dest',YY_dest','linear')';
   
   %%% Adjust layer thicknesses to account for incrops
   hh_dest = solveSalmonThicknesses (hh_dest,etab_dest,zeros(Nx_dest,Ny_dest),MM_dest,gg_dest,h0_dest); 
@@ -78,7 +113,11 @@ function fixSalmonLayers (src_home_dir, src_run_name, srcIter, dest_home_dir, de
   %%% Write corrected layer thickensses to output file
   for k=1:Nlay
     fname = fullfile(dirpath_dest,createOutputFilename(OUTN_H,destIter,k));
-    writeDataFile(fname,hh_dest(:,:,k));
+    writeDataFile(fname,hh_dest(k,:,:));
   end
+  
+  %%% Write topography
+  fname = fullfile(dirpath_dest,'etab.dat');
+  writeDataFile(fname,etab_dest);
     
 end

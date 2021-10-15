@@ -47,7 +47,7 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
   use_pbs = use_cluster;
   uname = 'astewart';
   cluster_addr = 'caolila.atmos.ucla.edu';
-  cluster_home_dir = '/data2/astewart/AWSIM_WindAABW/runs';
+  cluster_home_dir = '/data2/astewart/AWSIM_Undercurrent/runs';
   
   
 
