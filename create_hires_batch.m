@@ -27,6 +27,7 @@ run_batch_file = fopen(fullfile(local_home_dir,run_batch_fname),'w');
 
 %%% Loop over simulations and create hi-res runs
 for n=1:Nsims    
+% for n=[17 19]
   
   %%% Derived parameters
   if (is_wind_batch(n))

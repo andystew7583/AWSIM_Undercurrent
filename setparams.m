@@ -42,7 +42,7 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
   %%% Cluster config
   %%% NOTE: You will need to edit matlab_common/createRunScript to add a
   %%% configuration for your cluster!
-  use_cluster = false;
+  use_cluster = true;
   use_intel = false;
   use_pbs = use_cluster;
   uname = 'astewart';
@@ -127,7 +127,8 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
   if (full_diags)
     tmax = 15*t1year;
   else
-    tmax = 10*t1year;
+%     tmax = 10*t1year;
+    tmax = 1*t1year;
   end   
   savefreqEZ = 0.1*t1day;  
   if (full_diags)
@@ -465,7 +466,8 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
   switch (config)
     case 'wind'
       if (Ny==256)
-        h0 = 1.5;
+%         h0 = 1.5;
+        h0 = 2.5;
       else
         h0 = 3;
       end
