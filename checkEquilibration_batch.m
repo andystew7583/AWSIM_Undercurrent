@@ -14,7 +14,7 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 [is_wind_batch,grid_size_batch,wind_stress_batch, ...
   rand_force_batch,num_canyons_batch,amp_canyons_batch, ...
   max_slope_batch,sb_width_batch,baro_force_batch, ...
-  drag_coeff_batch,end_time_batch] = loadBatchParams ();
+  drag_coeff_batch,end_time_batch] = loadBatchParams ('batchData_hires.txt');
 
 %%% Iterate through simulations 
 Nsims = length(is_wind_batch);
@@ -49,28 +49,33 @@ for n=1:Nsims
   if (t(end)~=end_time*t1year)
     disp(['Mismatched end time for run: ',run_name]);
   end
-  start_time = end_time*t1year-5*t1year;
+  start_time = t(end)-10*t1year;
   start_idx = find(t<=start_time,1,'last');
+  if (isempty(start_idx) || (t(start_idx)<start_time) || (t(end)<10*t1year))
+    continue;
+  end
   
   %%% Construct a range of indices that creates a continuous time series
   idx = start_idx:length(t);  %%% Default to all indices within the time range
-  m = 1;
-  %%% Loop through indices within the time range
-  while (m < length(idx))
-    m = m + 1;
-    if (t(idx(m)) < t(idx(m-1))) %%% Time goes backwards - indicates a restart      
-      restart_idx = find(t(1:idx(m-1)) < t(idx(m)),1,'last'); %%% Find the previous index in t that matches the restart time
-      idx_idx = find(idx == restart_idx); %%% Index within the index array of the restart time
-      idx(idx_idx+1:m-1) = []; %%% Remove the chunk of time that was re-run since the restart
-      m = idx_idx + 1; %%% Resume the loop, noting that now idx has changed size
-    end
-  end
+  [unused idx] = unique(t(idx),'last');
+  idx = idx + start_idx - 1;
+%   m = 1;
+%   %%% Loop through indices within the time range
+%   while (m < length(idx))
+%     m = m + 1;
+%     if (t(idx(m)) < t(idx(m-1))) %%% Time goes backwards - indicates a restart      
+%       restart_idx = find(t(1:idx(m-1)) < t(idx(m)),1,'last'); %%% Find the previous index in t that matches the restart time
+%       idx_idx = find(idx == restart_idx); %%% Index within the index array of the restart time
+%       idx(idx_idx+1:m-1) = []; %%% Remove the chunk of time that was re-run since the restart
+%       m = idx_idx + 1; %%% Resume the loop, noting that now idx has changed size
+%     end
+%   end
   
   %%% Compute trends
   linfit = polyfit(t(idx),PE(idx)/mean(PE(idx)-PE(1))*100,1);
-  disp(['PE trend = ',num2str(linfit(1)*5*t1year,'%.1f')]);
+  disp(['PE trend = ',num2str(linfit(1)*10*t1year,'%.1f')]);
   linfit = polyfit(t(idx),KE(idx)/mean(KE(idx))*100,1);
-  disp(['KE trend = ',num2str(linfit(1)*5*t1year,'%.1f')]);
+  disp(['KE trend = ',num2str(linfit(1)*10*t1year,'%.1f')]);
   [r,p] = corr(t(idx)',PE(idx)');
   disp(['PE trend r-value = ',num2str(r)]);
   [r,p] = corr(t(idx)',KE(idx)');

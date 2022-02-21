@@ -7,11 +7,11 @@
 function [is_wind_batch,grid_size_batch,wind_stress_batch, ...
           rand_force_batch,num_canyons_batch,amp_canyons_batch, ...
           max_slope_batch,sb_width_batch,baro_force_batch, ...
-          drag_coeff_batch,end_time_batch] = loadBatchParams ()        
+          drag_coeff_batch,end_time_batch] = loadBatchParams (fname)        
 
   %%% Load parameters from file
-  load batchData.txt;
-
+  batchData = load(fname);
+  
   %%% Extract individual parameters
   is_wind_batch = batchData(:,1);
   grid_size_batch = batchData(:,2);

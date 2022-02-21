@@ -444,7 +444,7 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         zlabel('z (m)');
         set(gca,'FontSize',16);
         set(gcf,'Color','w');        
-        set(gca,'ZLim',[-4500 0]);
+        set(gca,'ZLim',[-4650 0]);
     end
     
              

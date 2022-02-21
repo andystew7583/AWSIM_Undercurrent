@@ -1,7 +1,7 @@
 %%%
-%%% calcMomBudget_batch.m
+%%% checkNaNs_batch.m
 %%%
-%%% Calculates along-isobath momentum budget diagnostics for all simulations.
+%%% Checks whether runs have blown up.
 %%%
 
 %%% Load constant parameters
@@ -14,7 +14,7 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 [is_wind_batch,grid_size_batch,wind_stress_batch, ...
   rand_force_batch,num_canyons_batch,amp_canyons_batch, ...
   max_slope_batch,sb_width_batch,baro_force_batch, ...
-  drag_coeff_batch,end_time_batch] = loadBatchParams ('batchData_hires.txt');
+  drag_coeff_batch,end_time_batch] = loadBatchParams ('batchData_inprogress.txt');
 
 %%% Iterate through simulations 
 Nsims = length(is_wind_batch);
@@ -44,7 +44,15 @@ for n=1:Nsims
           rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
   disp(['Working on ',run_name,' ...']);
         
-  %%% Calculate along-isobath momentum budget 
-  calcMomBudget (local_home_dir,run_name,end_time*t1year,uc_layidx);
+  %%% Load time series diagnostics
+  [KE,PE,E,Z,t]=readEZfile(local_home_dir,run_name);  
+  
+  %%% Check for NaNs
+  if (isnan(KE(end)))
+    disp(['Found NaNs in ',run_name]);
+  end
+  
+  %%% Display current end time
+  disp(['Current end time = ',num2str(t(end)/t1year),' years']);
         
 end

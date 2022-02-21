@@ -24,8 +24,11 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   Nd = length(dd);
 
   %%% Average diagnostics
-  tmax = tmax + 0.05*t1year;
-  tmin = tmax - 5*t1year;
+%   tmax = tmax + 0.05*t1year;
+  tmax = tmax - 2*t1year+ 0.05*t1year;
+%   tmin = tmax - 10*t1year;
+  tmin = tmax - 8*t1year;
+
 %   avg_iter_start = n0_avg;
 %   avg_num_iters = N_avg;
 %   avg_start_time = startTime;

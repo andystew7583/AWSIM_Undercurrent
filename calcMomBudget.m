@@ -25,8 +25,10 @@ function calcMomBudget (local_home_dir,run_name,tmax,uc_layidx)
   Nd = length(dd); 
   
   %%% Define averaging period
-  tmax = tmax + 0.05*t1year;
-  tmin = tmax - 5*t1year;
+%   tmax = tmax + 0.05*t1year;
+  tmax = tmax - 2*t1year+ 0.05*t1year;
+%   tmin = tmax - 10*t1year;
+  tmin = tmax - 8*t1year;
    
   %%% Average u-momentum diagnostics  
 %   avg_iter_start = n0_avg_hu;
