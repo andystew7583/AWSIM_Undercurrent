@@ -1,5 +1,5 @@
 %%%
-%%% regridOutput.m
+%%% fixSalmonLayers.m
 %%%
 %%% Takes output from RLSWchannel and adjusts layer thicknesses so that 
 %%% they are compatible with the specified Salmon layer thickness. Must be
