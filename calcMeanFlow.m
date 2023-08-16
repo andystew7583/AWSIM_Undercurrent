@@ -24,10 +24,10 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   Nd = length(dd);
 
   %%% Average diagnostics
-%   tmax = tmax + 0.05*t1year;
-  tmax = tmax - 2*t1year+ 0.05*t1year;
-%   tmin = tmax - 10*t1year;
-  tmin = tmax - 8*t1year;
+  tmax = tmax + 0.05*t1year;
+%   tmax = tmax - 2*t1year+ 0.05*t1year;
+  tmin = tmax - 10*t1year;
+%   tmin = tmax - 8*t1year;
 
 %   avg_iter_start = n0_avg;
 %   avg_num_iters = N_avg;
@@ -70,6 +70,14 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   for k=Nlay:-1:1
     e(:,:,k) = e(:,:,k+1) + h(:,:,k);
   end
+  
+  %%% Compute spatially-local KE
+  hw = 0.5*(h(1:Nx,:,:)+h([Nx 1:Nx-1],:,:));
+  hs = 0.5*(h(:,1:Ny,:)+h(:,[Ny 1:Ny-1],:));
+  huu_mean = 0.5.*hu.^2./hw;
+  hvv_mean = 0.5.*hv.^2./hs;
+  huu_eddy = 0.5*huu - huu_mean;
+  hvv_eddy = 0.5*hvv - hvv_mean;
 
   %%% Interpolate to q-points
   etab_q = 0*hhb;
@@ -86,6 +94,14 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   huu_q(:,1,:) = huu(:,1,:);
   hv_q = 0.5*(hv(1:Nx,:,:)+hv([Nx 1:Nx-1],:,:));
   hvv_q = 0.5*(hvv(1:Nx,:,:)+hvv([Nx 1:Nx-1],:,:));
+  huu_mean_q = 0*huu_mean;
+  huu_mean_q(:,2:Ny,:) = 0.5*(huu_mean(:,1:Ny-1,:)+huu_mean(:,2:Ny,:));
+  huu_mean_q(:,1,:) = huu_mean(:,1,:);
+  huu_eddy_q = 0*huu_eddy;
+  huu_eddy_q(:,2:Ny,:) = 0.5*(huu_eddy(:,1:Ny-1,:)+huu_eddy(:,2:Ny,:));
+  huu_eddy_q(:,1,:) = huu_eddy(:,1,:);
+  hvv_mean_q = 0.5*(hvv_mean(1:Nx,:,:)+hvv_mean([Nx 1:Nx-1],:,:));
+  hvv_eddy_q = 0.5*(hvv_eddy(1:Nx,:,:)+hvv_eddy([Nx 1:Nx-1],:,:));
 
   %%% Calculate curls of velocity and transport
   curl_u = calc_curl(u,v,dx,dy);
@@ -110,6 +126,10 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   huu_avg = calc_iso_int (huu_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
   hv_avg = calc_iso_int (hv_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
   hvv_avg = calc_iso_int (hvv_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
+  huu_mean_avg = calc_iso_int (huu_mean_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
+  huu_eddy_avg = calc_iso_int (huu_eddy_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
+  hvv_mean_avg = calc_iso_int (hvv_mean_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
+  hvv_eddy_avg = calc_iso_int (hvv_eddy_q,dx,dy,dd,coord_q) ./ repmat(cntrlen,[1 Nlay]);
   
   %%% Construct along-isobath mean layer elevations
   e_avg = zeros(Nd,Nlay+1);
@@ -122,9 +142,9 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   circ_twa = circ_hu ./ h_avg;
   
   %%% Calculate EKE
-  KE = huu_avg + hvv_avg;
-  MKE = (hu_avg.^2 + hv_avg.^2)./h_avg;
-  EKE = KE - MKE;
+  KE = 0.5*(huu_avg + hvv_avg);
+  MKE = 0.5*(huu_mean_avg+hvv_mean_avg)./h_avg;
+  EKE = 0.5*(huu_eddy_avg+hvv_eddy_avg)./h_avg;
 
   
   
@@ -136,9 +156,19 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
   
   %%% Calculate mean and eddy momentum fluxes
-  huu_mean = hu.^2./h;
-  hvv_mean = hv.^2./h;
-  huv_mean = hu.*hv./h;
+  h_w = 0.5*(h(1:Nx,:,:)+h([Nx 1:Nx-1],:,:)); 
+  h_s = 0.5*(h(:,1:Ny,:)+h(:,[Ny 1:Ny-1],:)); 
+  h_s(:,1,:) = h(:,1,:);
+  u_twa = hu./h_w;
+  v_twa = hv./h_s;
+  huu_mean = h_w.*u_twa.^2;
+  hvv_mean = h_s.*v_twa.^2;
+  huv_mean = 0.5.*(v_twa(1:Nx,:,:)+v_twa([Nx 1:Nx-1],:,:)) ...
+                .* 0.5.*(u_twa(:,1:Ny,:)+u_twa(:,[Ny 1:Ny-1],:)) ...
+                .* h_q;   
+%   huu_mean = hu.^2./h;
+%   hvv_mean = hv.^2./h;
+%   huv_mean = hu.*hv./h;
   huu_eddy = huu - huu_mean;
   hvv_eddy = hvv - hvv_mean;
   huv_eddy = huv - huv_mean;
@@ -185,6 +215,7 @@ function calcMeanFlow (local_home_dir,run_name,tmax,uc_layidx)
     'circ_u','circ_hu', ...
     'y_avg','h_avg','etab_avg','e_avg', ...
     'hu_avg','huu_avg','hv_avg','hvv_avg', ...
+    'huu_mean_avg','huu_eddy_avg','hvv_mean_avg','hvv_eddy_avg',...
     'KE','MKE','EKE', ...
     'circ_twa', ...
     'curl_totalMomFlux','curl_meanMomFlux','curl_eddyMomFlux', ...

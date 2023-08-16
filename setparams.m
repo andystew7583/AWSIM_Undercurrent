@@ -26,7 +26,7 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
           rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff)
  
   %%% Set true to take averaged diagnostics
-  full_diags = false;
+  full_diags = true;
 
   %%% Load constant parameters 
   constants;   
@@ -127,8 +127,8 @@ function setparams (local_home_dir,run_name,config,grid_size,wind_stress, ...
   if (full_diags)
     tmax = 15*t1year;
   else
-%     tmax = 10*t1year;
-    tmax = 1*t1year;
+    tmax = 10*t1year;
+%     tmax = 1*t1year;
   end   
   savefreqEZ = 0.1*t1day;  
   if (full_diags)

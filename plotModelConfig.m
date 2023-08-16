@@ -60,7 +60,7 @@ rhoRef = rhoBot - rhoRange*(exp(zz/hs)+zz/hl-exp(-H/hs)+H/hl)/(1-exp(-H/hs)+H/hl
 
 figure(1);
 plot(rhoRef,zz);
-xlabel('Offshore potential density profile');
+xlabel('Offshore potential density profile (kg/m^3)');
 ylabel('Elevation (m)');
 
 
@@ -153,7 +153,7 @@ taux(YY_u>Lwind) = 0;
 
 figure(4)
 plot(yy_h/1000,taux(1,:)*rho0);
-title('Wind stress');
+title('Wind stress (N/m^2)');
 xlabel('Offshore distance (km)');
 zlabel('Alongshore wind stress (N/m^2)');
 

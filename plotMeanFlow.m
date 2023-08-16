@@ -10,7 +10,7 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Select model configuration and parameters
 config = 'rand';
-grid_size = 128; %%% Default 128
+grid_size = 256; %%% Default 128
 wind_stress = 0.05; %%% Default 0.05
 rand_force = 0.75; %%% Default 0.75
 num_canyons = 4; %%% Default 4
@@ -38,7 +38,7 @@ rho0 = 1000;
 load(fullfile('products',[run_name,'_meanFlow.mat']));
 
 %%% For writing figures
-write_figs = true;
+write_figs = false;
 figdir = fullfile('plots',run_name);
 mkdir(figdir);
 
@@ -67,6 +67,8 @@ for k=1:Nlay
   UU_slice(:,2*k) = squeeze(u(slice_idx,:,k));
 end
 YY_slice = repmat(yy_h',[1 2*Nlay]);
+
+
 
 %%% Plotting options
 linewidth = 1.5;
@@ -163,8 +165,8 @@ axes('Position',axpos);
 pcolor(XX_u/1000,YY_u/1000,u(:,:,uc_layidx))
 shading interp
 hold on;
-[C,h] = contour(XX_h/1000,YY_h/1000,-hhb,[200 1000 2000 3000 4000],'EdgeColor','k');
-clabel(C,h);
+[C,handle] = contour(XX_h/1000,YY_h/1000,-hhb,[200 1000 2000 3000 4000],'EdgeColor','k');
+clabel(C,handle);
 hold off
 colorbar
 colormap redblue(40);
@@ -236,9 +238,23 @@ set(gca,'XDir','reverse');
 set(gca,'XLim',ylim_iso);
 set(gca,'FontSize',fontsize);
 
+figure(12);
+% pcolor(XX_h/1000,YY_h/1000,sum(EKE_local,3)./sum(h,3));
+pcolor(XX_h/1000,YY_h/1000,EKE_local(:,:,1)./h(:,:,1));
+shading interp;
+colorbar;
 
+figure(13);
+% pcolor(XX_h/1000,YY_h/1000,sum(MKE_local,3)./sum(h,3));
+pcolor(XX_h/1000,YY_h/1000,MKE_local(:,:,1)./h(:,:,1));
+shading interp;
+colorbar
 
-
+figure(14);
+% pcolor(XX_h/1000,YY_h/1000,sum(TKE_local,3)./sum(h,3));
+pcolor(XX_h/1000,YY_h/1000,TKE_local(:,:,1)./h(:,:,1));
+shading interp;
+colorbar
 
 
 

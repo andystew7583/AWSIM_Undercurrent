@@ -98,7 +98,7 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         pv = (ff+zeta)./hh_q;                   
                 
         %%% Make the plot
-        pcolor(XX_q/1000,YY_q/1000,pv);
+%         pcolor(XX_q/1000,YY_q/1000,pv);
         pcolor(XX_q/1000,YY_q/1000,log10(abs(pv)));
         shading interp;
         colorbar;
@@ -306,6 +306,147 @@ function M = anim (local_home_dir,run_name,var,layer,tmin,tmax)
         hold off
         title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']));        
         axis([0 Ly/1000 -.3 .3]);
+        
+        
+      %%% Plot zonally-averaged zonal velocity and relative vorticity
+      case 'uaz'
+        
+        %%% Load u
+        data_file = fullfile(dirpath,[OUTN_U,num2str(layer-1),'_n=',num2str(n),'.dat']);
+        uu = readOutputFile(data_file,Nx,Ny);
+        
+        %%% Load v
+        data_file = fullfile(dirpath,[OUTN_V,num2str(layer-1),'_n=',num2str(n),'.dat']);
+        vv = readOutputFile(data_file,Nx,Ny);                           
+                     
+        %%% Calculate the relative vorticity
+        zeta = zeros(Nx+1,Ny+1);            
+        zeta(2:Nx,2:Ny) = (uu(1:Nx-1,1:Ny-1)-uu(1:Nx-1,2:Ny)) / dy + (vv(2:Nx,2:Ny)-vv(1:Nx-1,2:Ny)) / dx;                      
+        if (~useWallNS)
+          zeta(:,Ny+1) = zeta(:,1);
+        end
+        zeta(Nx+1,:) = zeta(1,:);
+        Ro = zeta./(2*Omega_z);
+        max(max(abs(Ro)))      
+        
+        H = mean(-hhb,1);
+        dH_dy = 0*H;
+        dH_dy(2:end-1) = (H(3:end)-H(1:end-2)) / (2*dy);        
+        u_pred = dH_dy ./ (H.^3);
+        u_pred = u_pred * -0.8/max(abs(u_pred));
+        
+        beta = dH_dy./H;
+        idx_maxbeta = find(abs(beta)==max(abs(beta)));
+
+        clf
+        
+        sum(u_pred.^2)
+        sum(mean(uu,1).^2)
+        
+        %%% Make the plot
+        ax = axes;
+        set(ax,'Position',[0.05 0.08 0.2 0.85]);
+        plot(mean(uu,1),yy_u/1000);        
+        hold on        
+        plot(u_pred,yy_u/1000,'k--');                
+        plot(beta*-0.6/max(beta),yy_u/1000,'r--');        
+        plot(0*yy_u,yy_u/1000,'k:');
+%         plot([-1 1],[1 1]*yy_u(idx_maxbeta)/1000,'r--');
+%         text(0.2,50,'$\beta_{\mathrm{max}}$','interpreter','latex','FontSize',14,'Color','r');
+        hold off
+        title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']),'interpreter','latex');        
+        axis([-.6 .6 0 Ly/1000]);
+        ylabel('y (km)','interpreter','latex');          
+        xlabel('$\overline{u}^x$ (m/s)','interpreter','latex');
+        set(gca,'FontSize',14);
+        legend('Diagnosed','Theory','$\sim\beta_t$','interpreter','latex');
+        
+        %%% Make the plot
+        ax = axes;
+        set(ax,'Position',[0.32 0.08 0.65 0.85]);
+        pcolor(XX_q/1000,YY_q/1000,Ro);
+        shading interp;
+        hold on
+        [C,h] = contour(XX_h/1000,YY_h/1000,hhb,[-3800:600:-200],'EdgeColor','k');
+        clabel(C,h);
+        hold off;
+        colorbar;
+        colormap(cmocean('balance'));
+        caxis([-0.4 0.4]);        
+        title(strcat(['$Ro=\zeta/|f_0|$ at $t=$',num2str(t/t1day,'%.2f'),' days']),'interpreter','latex');        
+        xlabel('$x$ (km)','interpreter','latex');
+        ylabel('$y$ (km)','interpreter','latex');                   
+        set(gca,'FontSize',14);
+        
+        
+        %%% Plot zonally-averaged zonal velocity and relative vorticity
+      case 'KEaz'
+        
+        %%% Load u
+        data_file = fullfile(dirpath,[OUTN_U,num2str(layer-1),'_n=',num2str(n),'.dat']);
+        uu = readOutputFile(data_file,Nx,Ny);
+        
+        %%% Load v
+        data_file = fullfile(dirpath,[OUTN_V,num2str(layer-1),'_n=',num2str(n),'.dat']);
+        vv = readOutputFile(data_file,Nx,Ny);            
+        
+        %%% Load h
+        data_file = fullfile(dirpath,[OUTN_H,num2str(layer-1),'_n=',num2str(n),'.dat']);
+        hh = readOutputFile(data_file,Nx,Ny);  
+                     
+        %%% Calculate the relative vorticity
+        zeta = zeros(Nx+1,Ny+1);            
+        zeta(2:Nx,2:Ny) = (uu(1:Nx-1,1:Ny-1)-uu(1:Nx-1,2:Ny)) / dy + (vv(2:Nx,2:Ny)-vv(1:Nx-1,2:Ny)) / dx;                      
+        if (~useWallNS)
+          zeta(:,Ny+1) = zeta(:,1);
+        end
+        zeta(Nx+1,:) = zeta(1,:);
+        Ro = zeta./(2*Omega_z);
+        max(max(abs(Ro)))      
+        
+        H = mean(-hhb,1);
+        dH_dy = 0*H;
+        dH_dy(2:end-1) = (H(3:end)-H(1:end-2)) / (2*dy);        
+        KE_pred = dH_dy.^2 ./ (H.^5);
+        KE_pred = KE_pred * 40/max(abs(KE_pred));
+
+        clf
+        
+%         sum(u_pred.^2)
+%         sum(mean(uu,1).^2)
+        
+        %%% Make the plot
+        ax = axes;
+        set(ax,'Position',[0.05 0.08 0.2 0.85]);
+        plot(mean(0.5*hh.*(uu.^2+vv.^2),1),yy_u/1000);        
+        hold on        
+        plot(KE_pred,yy_u/1000,'k--');        
+        plot(0*yy_u,yy_u/1000,'k:');
+        hold off
+        title(strcat(['t=',num2str(t/t1day,'%.2f'),' days']),'interpreter','latex');        
+%         axis([-.3 .3 0 Ly/1000]);
+        ylabel('y (km)','interpreter','latex');          
+        xlabel('$\overline{\frac{1}{2}h\mathbf{u}^2}^x$ (m/s)','interpreter','latex');
+        set(gca,'FontSize',14);
+        legend('Diagnosed','Theory');
+        
+        %%% Make the plot
+        ax = axes;
+        set(ax,'Position',[0.32 0.08 0.65 0.85]);
+        pcolor(XX_q/1000,YY_q/1000,Ro);
+        shading interp;
+        hold on
+        [C,h] = contour(XX_h/1000,YY_h/1000,hhb,[-3800:600:-200],'EdgeColor','k');
+%         [C,h] = contour(XX_h/1000,YY_h/1000,hhb,[-3500:500:-500],'EdgeColor','k');
+        clabel(C,h);
+        hold off;
+        colorbar;
+        colormap(cmocean('balance'));
+        caxis([-0.4 0.4]);        
+        title(strcat(['$Ro=\zeta/|f0|$ at $t=$',num2str(t/t1day,'%.2f'),' days']),'interpreter','latex');        
+        xlabel('$x$ (km)','interpreter','latex');
+        ylabel('$y$ (km)','interpreter','latex');                   
+        set(gca,'FontSize',14);
         
         
       %%% Plot zonally-averaged meridional velocity
