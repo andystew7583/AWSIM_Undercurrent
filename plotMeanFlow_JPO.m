@@ -23,20 +23,10 @@ drag_coeff = 2; %%% Default
 linewidth = 1.5;
 axlim_zon = 7e-2;
 axlim_iso = 5e-2;
-ylim_iso = [y_avg(1)/1000 100];
 ylim_zon = [0 350];
-switch (coord_name)
-  case 'bathy'
-    d_levs = [110 150 200 400 1000 2000 2500 3000 3500];
-  case 'psi'
-    d_levs = [0.1 0.5 1 3 5];
-end
+d_levs = [110 150 200 400 1000 2000 2500 3000 3500];
 d_idx = zeros(1,length(d_levs));
 d_labels = cell(1,length(d_levs));
-for m=1:length(d_levs)
-  d_idx(m) = find(abs(dd-d_levs(m))<1e-15);
-  d_labels{m} = num2str(d_levs(m));
-end
 fontsize = 14;
 axpos = zeros(4,4);
 axpos(1,:) = [0.075 0.73 .40 .23];
@@ -70,7 +60,14 @@ for i=1:2
             rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
   loadParams;
   load(fullfile('products',[run_name,'_meanFlow.mat']));
-
+  ylim_iso = [y_avg(1)/1000 100];
+  for m=1:length(d_levs)
+    d_idx(m) = find(abs(dd-d_levs(m))<1e-15);
+    d_labels{m} = num2str(d_levs(m));
+  end
+  h_w = 0.5*(h(1:Nx,:,:)+h([Nx 1:Nx-1],:,:));   
+  u_twa = hu./h_w;  
+  
   %%% Create grid for slice contour plots
   eps = 1; %%% Small distance by which to perturb plotting points away from actual isopycnal elevations
   slice_idx = Nx/4;
@@ -80,13 +77,13 @@ for i=1:2
   for k=1:Nlay
     ZZ_slice(:,2*k-1) = squeeze(e(slice_idx,:,k))-eps;
     ZZ_slice(:,2*k) = squeeze(e(slice_idx,:,k+1))+eps;
-    UU_slice(:,2*k-1) = squeeze(u(slice_idx,:,k));
-    UU_slice(:,2*k) = squeeze(u(slice_idx,:,k));
+    UU_slice(:,2*k-1) = squeeze(u_twa(slice_idx,:,k));
+    UU_slice(:,2*k) = squeeze(u_twa(slice_idx,:,k));
   end
   YY_slice = repmat(yy_h',[1 2*Nlay]);
   
   subplot('Position',axpos(1+i-1,:));
-  pcolor(XX_u/1000,YY_u/1000,u(:,:,1))
+  pcolor(XX_u/1000,YY_u/1000,u_twa(:,:,1))
   shading interp
   hold on;
   [C,handle] = contour(XX_h/1000,YY_h/1000,-hhb,[110 300 1500 3000 3500 4000],'EdgeColor','k');
@@ -111,7 +108,7 @@ for i=1:2
   end
 
   subplot('Position',axpos(3+i-1,:));
-  pcolor(XX_u/1000,YY_u/1000,u(:,:,uc_layidx))
+  pcolor(XX_u/1000,YY_u/1000,u_twa(:,:,uc_layidx))
   shading interp
   hold on;
   [C,handle] = contour(XX_h/1000,YY_h/1000,-hhb,[110 300 1500 3000 3500 4000],'EdgeColor','k');

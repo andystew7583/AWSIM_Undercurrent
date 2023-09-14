@@ -9,7 +9,7 @@ local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Run to load
 % run_name = 'undercurrent_LWF_tau0.05_Nc4_Yc25_Ny256';
-run_name = 'undercurrent_LWF_tau0.05_Nc4_Yc25_Fbaro0.05_Ny256';
+run_name = 'undercurrent_LWF_tau0.05_Nc4_Yc25_Fbaro0.025_Ny256';
 
 %%% Load parameters   
 loadParams;
@@ -242,7 +242,7 @@ ylabel('Offshore distance (km)');
 xlabel('Alongshore stress (N/m^2)');
 % title('Wind stress');
 set(gca,'FontSize',fontsize);
-legend('Wind stress','Along-shore pressure gradient','Location','Northwest');
+legend('Wind stress','APF','Location','Northeast');
 
 
 %%% Plot PV snapshot
@@ -305,7 +305,7 @@ caxis([-10 10]);
 xlabel('Alongshore distance (km)');
 ylabel('Offshore distance (km)');
 text(Lx/2/m1km,(Ly-Lrelax/2)/m1km,'Sponge','FontSize',10);
-title('Random forcing function');
+title('Random force function');
 
 cntr = cntr + 1;
 ax = axes('position',axpos(cntr,:));  
@@ -411,7 +411,7 @@ annotation(figure1,'doublearrow',[0.187717679499417 0.286924028705765],...
 % Create textbox
 annotation(figure1,'textbox',...
   [0.210945876197546 0.774168146174936 0.0592857142857142 0.0385714285714286],...
-  'String','F_b_a_r_o',...
+  'String','P_x^0',...
   'LineStyle','none',...
   'FontSize',14,...
   'FitBoxToText','off');

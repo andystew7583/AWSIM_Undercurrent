@@ -9,7 +9,7 @@
 local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
 
 %%% Select model configuration and parameters
-config = 'rand';
+config = 'wind';
 grid_size = 256; %%% Default 128
 wind_stress = 0.05; %%% Default 0.05
 rand_force = 0.75; %%% Default 0.75
@@ -17,7 +17,7 @@ num_canyons = 4; %%% Default 4
 amp_canyons = 25; %%% Default 25
 max_slope = 0.15; %%% Default 0.15
 sb_width = 5; %%% Default 5
-baro_force = 0; %%% Default 0
+baro_force = 0.025; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
 %%% Undercurrent layer
@@ -238,23 +238,23 @@ set(gca,'XDir','reverse');
 set(gca,'XLim',ylim_iso);
 set(gca,'FontSize',fontsize);
 
-figure(12);
-% pcolor(XX_h/1000,YY_h/1000,sum(EKE_local,3)./sum(h,3));
-pcolor(XX_h/1000,YY_h/1000,EKE_local(:,:,1)./h(:,:,1));
-shading interp;
-colorbar;
-
-figure(13);
-% pcolor(XX_h/1000,YY_h/1000,sum(MKE_local,3)./sum(h,3));
-pcolor(XX_h/1000,YY_h/1000,MKE_local(:,:,1)./h(:,:,1));
-shading interp;
-colorbar
-
-figure(14);
-% pcolor(XX_h/1000,YY_h/1000,sum(TKE_local,3)./sum(h,3));
-pcolor(XX_h/1000,YY_h/1000,TKE_local(:,:,1)./h(:,:,1));
-shading interp;
-colorbar
+% figure(12);
+% % pcolor(XX_h/1000,YY_h/1000,sum(EKE_local,3)./sum(h,3));
+% pcolor(XX_h/1000,YY_h/1000,EKE_local(:,:,1)./h(:,:,1));
+% shading interp;
+% colorbar;
+% 
+% figure(13);
+% % pcolor(XX_h/1000,YY_h/1000,sum(MKE_local,3)./sum(h,3));
+% pcolor(XX_h/1000,YY_h/1000,MKE_local(:,:,1)./h(:,:,1));
+% shading interp;
+% colorbar
+% 
+% figure(14);
+% % pcolor(XX_h/1000,YY_h/1000,sum(TKE_local,3)./sum(h,3));
+% pcolor(XX_h/1000,YY_h/1000,TKE_local(:,:,1)./h(:,:,1));
+% shading interp;
+% colorbar
 
 
 

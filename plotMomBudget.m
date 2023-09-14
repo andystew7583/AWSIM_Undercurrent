@@ -17,13 +17,13 @@ num_canyons = 4; %%% Default 4
 amp_canyons = 25; %%% Default 25
 max_slope = 0.15; %%% Default 0.15
 sb_width = 5; %%% Default 5
-baro_force = 0.025; %%% Default 0
+baro_force = 0.0; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
 %%% Undercurrent layer
 switch (config)
   case 'wind'
-    uc_layidx = 3;
+    uc_layidx = 5;
   case 'rand'
     uc_layidx = 2;
 end

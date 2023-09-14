@@ -1,5 +1,5 @@
 %%%
-%%% plotMomBudget_JPO.m
+%%% plotIsoMomBudget_JPO.m
 %%%
 %%% Plots diagnostics from time-averaged momentum budget in isobath coordinates for our
 %%% undercurrent runs, for our JPO paper.
@@ -74,13 +74,13 @@ for i=1:2
   set(gcf,'Position',framepos);
 
   subplot('Position',axpos(1+i-1,:));
-  plot(y_avg/1000,sum(circ_windStress,2)./cntrlen,'LineWidth',linewidth);
+  plot(y_avg/1000,sum(circ_windStress,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(1,:));
   hold on;
-  plot(y_avg/1000,sum(circ_Montgomery,2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_advection,2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_quadBotDrag,2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_hypervisc,2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_randomForcing,2)./cntrlen,'LineWidth',linewidth);
+  plot(y_avg/1000,sum(circ_Montgomery,2)./cntrlen,'LineWidth',2,'Color',defaultcolororder(2,:),'LineStyle',':');
+  plot(y_avg/1000,sum(circ_advection,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(3,:));
+  plot(y_avg/1000,sum(circ_quadBotDrag,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(4,:));
+  plot(y_avg/1000,sum(circ_hypervisc,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
+  plot(y_avg/1000,sum(circ_randomForcing,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(y_avg/1000,sum(circ_total,2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
   hold off;
   set(gca,'XDir','reverse');
@@ -115,18 +115,15 @@ for i=1:2
   end
 
   subplot('Position',axpos(3+i-1,:));
-  plot(y_avg/1000,sum(circ_windStress(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
+  plot(y_avg/1000,sum(circ_windStress(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(1,:));
   hold on;
-  plot(y_avg/1000,sum(circ_Montgomery(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_advection(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_quadBotDrag(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_hypervisc(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_randomForcing(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
+  plot(y_avg/1000,sum(circ_Montgomery(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(2,:),'LineStyle','--');
+  plot(y_avg/1000,sum(circ_advection(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(3,:));
+  plot(y_avg/1000,sum(circ_quadBotDrag(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(4,:));
+  plot(y_avg/1000,sum(circ_hypervisc(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
+  plot(y_avg/1000,sum(circ_randomForcing(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(y_avg/1000,sum(circ_total(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
-  hold off;
-  if (i == 2)
-    legend('Wind','Pressure','Advection','Friction','Viscosity','Random forcing','Total','Location','NorthWest');
-  end
+  hold off;  
   set(gca,'XDir','reverse');
   if (i==1)
     ylabel('N/m^2');
@@ -154,17 +151,21 @@ for i=1:2
   text(99,-axlim_iso*0.9,'Upper ocean','FontSize',fontsize+2);
 
   subplot('Position',axpos(5+i-1,:));
-  plot(y_avg/1000,sum(circ_windStress(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
+  plot(y_avg/1000,sum(circ_windStress(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(1,:));
   hold on;
-  plot(y_avg/1000,sum(circ_Montgomery(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_advection(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_quadBotDrag(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_hypervisc(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
-  plot(y_avg/1000,sum(circ_randomForcing(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
+  plot(y_avg/1000,-sum(circ_Montgomery(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(2,:),'LineStyle','--');
+  plot(y_avg/1000,sum(circ_Montgomery(:,1:Nlay),2)./cntrlen,'LineWidth',2,'Color',defaultcolororder(2,:),'LineStyle',':');
+  plot(y_avg/1000,sum(circ_advection(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(3,:));
+  plot(y_avg/1000,sum(circ_quadBotDrag(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(4,:));
+  plot(y_avg/1000,sum(circ_hypervisc(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
+  plot(y_avg/1000,sum(circ_randomForcing(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(y_avg/1000,sum(circ_total(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
   hold off;
   xlabel('Mean isobath offshore distance (km)');
   set(gca,'XDir','reverse');
+  if (i == 2)
+    legend('Wind','Interfacial form stress','Topographic form stress','Advection','Friction','Viscosity','Random forcing','Total','Location','NorthWest');
+  end
   if (i==1)
     ylabel('N/m^2');
   end

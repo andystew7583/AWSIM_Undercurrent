@@ -17,7 +17,7 @@ amp_canyons = 25; %%% Default 25
 max_slope = 0.15; %%% Default 0.15
 sb_width = 5; %%% Default 5
 baro_force = 0; %%% Default 0
-drag_coeff = 2; %%% Default 2
+drag_coeff = 3; %%% Default 2
 
 %%% Plotting options
 linewidth = 1.5;
@@ -50,6 +50,7 @@ lab_size = [0.05 0.03];
 rho0 = 1000;
 markersize = 40;
 framepos = [382   100   920   1040];
+defaultcolororder = get(gca,'ColorOrder');
 
 figure(106);
 clf;
@@ -68,16 +69,20 @@ for i=1:2
   load(fullfile('products',[run_name,'_momBalance.mat']));
 
   subplot('Position',axpos(1+i-1,:));
-  plot(yy_h/1000,mean(sum(UMom_windStress,3),1),'LineWidth',linewidth);
-  hold on;
-  plot(yy_h/1000,mean(sum(UMom_Montgomery,3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_advection,3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_quadBotDrag,3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_hypervisc,3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_randomForcing,3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_total,3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);
+  plot(yy_h/1000,mean(sum(UMom_windStress,3),1),'LineWidth',linewidth,'Color',defaultcolororder(1,:));
+  hold on;  
+  plot(yy_h/1000,mean(sum(UMom_Montgomery,3),1),'LineWidth',linewidth,'Color',defaultcolororder(2,:),'LineStyle',':');
+  plot(yy_h/1000,mean(sum(UMom_advection,3),1),'LineWidth',linewidth,'Color',defaultcolororder(3,:));
+  plot(yy_h/1000,mean(sum(UMom_quadBotDrag,3),1),'LineWidth',linewidth,'Color',defaultcolororder(4,:));
+  plot(yy_h/1000,mean(sum(UMom_hypervisc,3),1),'LineWidth',linewidth,'Color',defaultcolororder(5,:));
+  plot(yy_h/1000,mean(sum(UMom_randomForcing,3),1),'LineWidth',linewidth,'Color',defaultcolororder(6,:));
+  plot(yy_h/1000,mean(sum(UMom_total,3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);  
   hold off 
-  set(gca,'XDir','reverse');
+  set(gca,'XDir','reverse');  
+%   if (i == 2)
+%     handle = legend('Wind','Advection','Friction','Viscosity','Random forcing','Total','Location','NorthEast');
+%     set(handle,'Position',[0.828804347826087 0.849519231322909 0.142934782608696 0.107692307692308]);
+%   end
   if (i==1)
     ylabel('N/m^2');
   end
@@ -92,18 +97,15 @@ for i=1:2
   end
 
   subplot('Position',axpos(3+i-1,:));
-  plot(yy_h/1000,mean(sum(UMom_windStress(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth);
+  plot(yy_h/1000,mean(sum(UMom_windStress(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(1,:));
   hold on;
-  plot(yy_h/1000,mean(sum(UMom_Montgomery(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_advection(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_quadBotDrag(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_hypervisc(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_randomForcing(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth);
+  plot(yy_h/1000,mean(sum(UMom_Montgomery(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'LineStyle','--','Color',defaultcolororder(2,:));
+  plot(yy_h/1000,mean(sum(UMom_advection(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(3,:));
+  plot(yy_h/1000,mean(sum(UMom_quadBotDrag(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(4,:));
+  plot(yy_h/1000,mean(sum(UMom_hypervisc(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(5,:));
+  plot(yy_h/1000,mean(sum(UMom_randomForcing(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(yy_h/1000,mean(sum(UMom_total(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);
-  hold off
-  if (i == 2)
-    legend('Wind','Pressure','Advection','Friction','Viscosity','Random forcing','Total','Location','NorthWest');
-  end
+  hold off  
   set(gca,'XDir','reverse');
   if (i==1)
     ylabel('N/m^2');
@@ -114,17 +116,23 @@ for i=1:2
   text(345,-axlim_zon*0.9,'Upper ocean','FontSize',fontsize+2);
 
   subplot('Position',axpos(5+i-1,:));
-  plot(yy_h/1000,mean(sum(UMom_windStress(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
-  hold on;
-  plot(yy_h/1000,mean(sum(UMom_Montgomery(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_advection(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_quadBotDrag(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_hypervisc(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_randomForcing(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
-  plot(yy_h/1000,mean(sum(UMom_total(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);
+  plot(yy_h/1000,mean(sum(UMom_windStress(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(1,:));  
+  hold on;    
+  plot(yy_h/1000,mean(sum(-UMom_Montgomery(:,:,1:uc_layidx-1),3),1),'--','LineWidth',linewidth,'Color',defaultcolororder(2,:));
+  plot(yy_h/1000,mean(sum(UMom_Montgomery(:,:,1:end),3),1),':','LineWidth',linewidth,'Color',defaultcolororder(2,:));
+%   plot(yy_h/1000,mean(sum(UMom_Montgomery(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth);
+  plot(yy_h/1000,mean(sum(UMom_advection(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(3,:));
+  plot(yy_h/1000,mean(sum(UMom_quadBotDrag(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(4,:));
+  plot(yy_h/1000,mean(sum(UMom_hypervisc(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(5,:));
+  plot(yy_h/1000,mean(sum(UMom_randomForcing(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(6,:));
+  plot(yy_h/1000,mean(sum(UMom_total(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);  
   hold off
-  xlabel('Offshore distance (km)');
+  xlabel('Offshore distance (km)');  
   set(gca,'XDir','reverse');
+  if (i == 2)
+    handle = legend('Wind','Interfacial form stress','Topographic form stress','Advection','Friction','Viscosity','Random forcing','Total','Location','NorthEast');    
+    set(handle,'Position',[0.791847826086958 0.530288461538465 0.195108695652174 0.122596153846154]);
+  end
   if (i==1)
     ylabel('N/m^2');
   end
