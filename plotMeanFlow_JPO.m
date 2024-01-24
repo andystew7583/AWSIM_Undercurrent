@@ -90,7 +90,7 @@ for i=1:2
   clabel(C,handle);
   plot([xx_u(slice_idx) xx_u(slice_idx)]/1000,[0 yy_u(end)/1000],'k--','LineWidth',3);
   hold off  
-  colormap(cmocean('balance',40))
+  colormap(gca,cmocean('balance',40))
   caxis([-.4 .4]);
   set(gca,'FontSize',fontsize);
   if (i == 1)
@@ -115,7 +115,7 @@ for i=1:2
   clabel(C,handle);
   plot([xx_u(slice_idx) xx_u(slice_idx)]/1000,[0 yy_u(end)/1000],'k--','LineWidth',3);
   hold off  
-  colormap(cmocean('balance',20))
+  colormap(gca,cmocean('balance',20))
   caxis([-.2 .2]);
   set(gca,'FontSize',fontsize);
   xlabel('Alongshore distance (km)');
@@ -134,7 +134,7 @@ for i=1:2
   hold on;
   plot(yy_h/1000,-squeeze(e(slice_idx,:,:)),'Color',[.7 .7 .7]);  
   hold off;
-  colormap(cmocean('balance',30))
+  colormap(gca,cmocean('balance',30))
   caxis([-0.3 0.3]);
   xlabel('Offshore distance (km)');
   if (i == 1)    

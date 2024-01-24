@@ -20,7 +20,7 @@ baro_force = 0; %%% Default 0
 drag_coeff = 2; %%% Default
        
 %%% Plotting options
-linewidth = 1.5;
+linewidth = 2;
 axlim_zon = 7e-2;
 axlim_iso = 5e-2;
 ylim_iso = [y_avg(1)/1000 100];
@@ -66,6 +66,10 @@ for i=1:2
             rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
   loadParams;
   load(fullfile('products',[run_name,'_meanFlow.mat']));
+  
+  UC_yidx1 = find(dd>150,1,'First');
+  UC_yidx2 = find(dd>600,1,'First');
+
 
   %%% For momentum balance plots
   axlim_iso = 5e-2;
@@ -75,6 +79,7 @@ for i=1:2
   hold on;
   plot(y_avg/1000,rho0*sum(circ_meanMomFlux,2)./cntrlen,'LineWidth',linewidth);
   plot(y_avg/1000,rho0*sum(circ_eddyMomFlux,2)./cntrlen,'LineWidth',linewidth);
+  area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
   hold off; 
   set(gca,'XDir','reverse');
   if (i == 1)
@@ -112,6 +117,7 @@ for i=1:2
   hold on;
   plot(y_avg/1000,rho0*sum(circ_meanMomFlux(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
   plot(y_avg/1000,rho0*sum(circ_eddyMomFlux(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth);
+  area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
   hold off;
   if (i == 2)
     legend('Total','Mean','Eddy','Location','NorthWest'); 
@@ -146,6 +152,7 @@ for i=1:2
   hold on;
   plot(y_avg/1000,rho0*sum(circ_meanMomFlux(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
   plot(y_avg/1000,rho0*sum(circ_eddyMomFlux(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth);
+  area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
   hold off;  
   xlabel('Mean isobath offshore distance (km)');
   set(gca,'XDir','reverse');

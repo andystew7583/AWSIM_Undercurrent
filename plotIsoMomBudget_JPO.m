@@ -20,7 +20,7 @@ baro_force = 0; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
 %%% Plotting options
-linewidth = 1.5;
+linewidth = 2;
 axlim_zon = 7e-2;
 axlim_iso = 5e-2;
 ylim_zon = [0 350];
@@ -69,11 +69,16 @@ for i=1:2
     d_idx(m) = find(abs(dd-d_levs(m))<1e-15);
     d_labels{m} = num2str(d_levs(m));
   end
+  
+  UC_yidx1 = find(dd>150,1,'First');
+  UC_yidx2 = find(dd>600,1,'First');
+  
 
   figure(107);
   set(gcf,'Position',framepos);
 
   subplot('Position',axpos(1+i-1,:));
+  defaultcolororder = get(gca,'ColorOrder');
   plot(y_avg/1000,sum(circ_windStress,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(1,:));
   hold on;
   plot(y_avg/1000,sum(circ_Montgomery,2)./cntrlen,'LineWidth',2,'Color',defaultcolororder(2,:),'LineStyle',':');
@@ -82,6 +87,9 @@ for i=1:2
   plot(y_avg/1000,sum(circ_hypervisc,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
   plot(y_avg/1000,sum(circ_randomForcing,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(y_avg/1000,sum(circ_total,2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
+  area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
+%   plot([y_avg(UC_yidx1) y_avg(UC_yidx1)]/1000,[-axlim_iso axlim_iso],'k:');
+%   plot([y_avg(UC_yidx2) y_avg(UC_yidx2)]/1000,[-axlim_iso axlim_iso],'k:');
   hold off;
   set(gca,'XDir','reverse');
   if (i==1)
@@ -123,6 +131,7 @@ for i=1:2
   plot(y_avg/1000,sum(circ_hypervisc(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
   plot(y_avg/1000,sum(circ_randomForcing(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(y_avg/1000,sum(circ_total(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
+  area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
   hold off;  
   set(gca,'XDir','reverse');
   if (i==1)
@@ -160,6 +169,7 @@ for i=1:2
   plot(y_avg/1000,sum(circ_hypervisc(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
   plot(y_avg/1000,sum(circ_randomForcing(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(y_avg/1000,sum(circ_total(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
+  area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
   hold off;
   xlabel('Mean isobath offshore distance (km)');
   set(gca,'XDir','reverse');

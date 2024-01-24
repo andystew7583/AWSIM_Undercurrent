@@ -20,7 +20,7 @@ baro_force = 0.025; %%% Default 0
 drag_coeff = 2; %%% Default 2
 
 %%% Plotting options
-linewidth = 1.5;
+linewidth = 2;
 axlim_zon = 7e-2;
 axlim_iso = 5e-2;
 ylim_zon = [0 350];
@@ -64,6 +64,8 @@ for m=1:length(d_levs)
   d_labels{m} = num2str(d_levs(m));
 end
 
+UC_yidx1 = find(dd>150,1,'First');
+UC_yidx2 = find(dd>600,1,'First');
 
 
 subplot('Position',axpos(1,:));
@@ -75,6 +77,7 @@ plot(y_avg/1000,sum(circ_quadBotDrag,2)./cntrlen,'LineWidth',linewidth,'Color',d
 plot(y_avg/1000,sum(circ_hypervisc,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
 plot(y_avg/1000,sum(circ_baroForcing,2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
 plot(y_avg/1000,sum(circ_total,2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
+area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
 hold off;
 set(gca,'XDir','reverse');
 ylabel('N/m^2');
@@ -109,6 +112,7 @@ plot(y_avg/1000,sum(circ_quadBotDrag(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',li
 plot(y_avg/1000,sum(circ_hypervisc(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
 plot(y_avg/1000,sum(circ_baroForcing(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
 plot(y_avg/1000,sum(circ_total(:,1:uc_layidx-1),2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
+area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
 hold off;
 set(gca,'XDir','reverse');
 ylabel('N/m^2');
@@ -155,6 +159,7 @@ plot(y_avg/1000,sum(circ_quadBotDrag(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',l
 plot(y_avg/1000,sum(circ_hypervisc(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(5,:));
 plot(y_avg/1000,sum(circ_baroForcing(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',defaultcolororder(6,:));
 plot(y_avg/1000,sum(circ_total(:,uc_layidx:Nlay),2)./cntrlen,'LineWidth',linewidth,'Color',[.7 .7 .7]);
+area([y_avg(UC_yidx1) y_avg(UC_yidx2)]/1000,[axlim_iso axlim_iso],-axlim_iso,'FaceColor','k','FaceAlpha',0.1);
 hold off;
 handle = legend('Wind','Interfacial form stress','Topographic form stress','Advection','Friction','Viscosity','APF','Total','Location','SouthEast');
 set(handle,'Position',[0.6250    0.2135    0.3452    0.1226]);

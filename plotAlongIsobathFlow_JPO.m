@@ -89,6 +89,7 @@ for i=1:2
   shading interp
   hold on;
   plot(y_avg/1000,-e_avg,'Color',[.7 .7 .7]);
+  plot(
   hold off;
   colormap(gca,cmocean('balance',40)); 
   caxis([-.1 .1])

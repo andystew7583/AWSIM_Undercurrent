@@ -20,7 +20,7 @@ baro_force = 0; %%% Default 0
 drag_coeff = 3; %%% Default 2
 
 %%% Plotting options
-linewidth = 1.5;
+linewidth = 2;
 axlim_zon = 7e-2;
 axlim_iso = 5e-2;
 ylim_iso = [y_avg(1)/1000 100];
@@ -77,6 +77,7 @@ for i=1:2
   plot(yy_h/1000,mean(sum(UMom_hypervisc,3),1),'LineWidth',linewidth,'Color',defaultcolororder(5,:));
   plot(yy_h/1000,mean(sum(UMom_randomForcing,3),1),'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(yy_h/1000,mean(sum(UMom_total,3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);  
+  area([50 150],[axlim_zon axlim_zon],-axlim_zon,'FaceColor','k','FaceAlpha',0.1);
   hold off 
   set(gca,'XDir','reverse');  
 %   if (i == 2)
@@ -105,6 +106,7 @@ for i=1:2
   plot(yy_h/1000,mean(sum(UMom_hypervisc(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(5,:));
   plot(yy_h/1000,mean(sum(UMom_randomForcing(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(yy_h/1000,mean(sum(UMom_total(:,:,1:uc_layidx-1),3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);
+  area([50 150],[axlim_zon axlim_zon],-axlim_zon,'FaceColor','k','FaceAlpha',0.1);
   hold off  
   set(gca,'XDir','reverse');
   if (i==1)
@@ -126,6 +128,7 @@ for i=1:2
   plot(yy_h/1000,mean(sum(UMom_hypervisc(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(5,:));
   plot(yy_h/1000,mean(sum(UMom_randomForcing(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',defaultcolororder(6,:));
   plot(yy_h/1000,mean(sum(UMom_total(:,:,uc_layidx:Nlay),3),1),'LineWidth',linewidth,'Color',[.7 .7 .7]);  
+  area([50 150],[axlim_zon axlim_zon],-axlim_zon,'FaceColor','k','FaceAlpha',0.1);
   hold off
   xlabel('Offshore distance (km)');  
   set(gca,'XDir','reverse');

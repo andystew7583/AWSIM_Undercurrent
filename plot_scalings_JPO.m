@@ -1,98 +1,98 @@
-% %%%
-% %%% plot_batch.m
-% %%%
-% %%% Plots scalings for eddy forcing of the undercurrent from our batch of simulations, for our JPO paper.
-% %%%
-% 
-% %%% Load constant parameters
-% constants;
-% rho0 = 1000;
-% 
-% %%% Location of runs on file system
-% local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
-% 
-% %%% Load parameters for all simulations in the batch
-% [is_wind_batch,grid_size_batch,wind_stress_batch, ...
-%   rand_force_batch,num_canyons_batch,amp_canyons_batch, ...
-%   max_slope_batch,sb_width_batch,baro_force_batch, ...
-%   drag_coeff_batch,end_time_batch] = loadBatchParams ('batchData_hires.txt');
-% 
-% %%% Iterate through simulations 
-% Nsims = length(is_wind_batch);
-% uc_speed_batch = zeros(Nsims,1);
-% uc_EKE_batch = zeros(Nsims,1);
-% tot_EKE_batch = zeros(Nsims,1);
-% uc_advection_batch = zeros(Nsims,1);
-% uc_eddyforce_batch = zeros(Nsims,1);
-% uc_hypervisc_batch = zeros(Nsims,1);
-% tot_advection_batch = zeros(Nsims,1);
-% uc_windStress_batch = zeros(Nsims,1);
-% uc_baroForcing_batch = zeros(Nsims,1);
-% uc_Montgomery_batch = zeros(Nsims,1);
-% uc_quadBotDrag_batch = zeros(Nsims,1);
-% uc_TFS_batch = zeros(Nsims,1);
-% for n=1:Nsims
-%   
-%   %%% Derived parameters
-%   if (is_wind_batch(n))
-%     config = 'wind';
-%   else
-%     config = 'rand';
-%   end  
-%   grid_size = grid_size_batch(n);
-%   wind_stress = wind_stress_batch(n);
-%   rand_force = rand_force_batch(n);
-%   num_canyons = num_canyons_batch(n);
-%   amp_canyons = amp_canyons_batch(n);
-%   max_slope = max_slope_batch(n);
-%   sb_width = sb_width_batch(n);
-%   baro_force = baro_force_batch(n);
-%   drag_coeff = drag_coeff_batch(n);
-%   end_time = end_time_batch(n);
-%   
-%   %%% Generate simulation name
-%   run_name = constructRunName (config,grid_size,wind_stress, ...
-%           rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
-%   disp(['Working on ',run_name,' ...']);
-%         
-%   %%% Calculate along-isobath mean flow 
-%   loadParams;
-%   load(fullfile('products',[run_name,'_meanFlow.mat']));
-%   load(fullfile('products',[run_name,'_momBalance.mat']));
-%   
-%   
-%     
-%   
-%   %%% Range of depths (isobaths) over which to average  
-% %   uc_didx = find((dd>=150) & (dd<=1000));
-%   uc_didx = find((dd>=120) & (dd<=600));
-%   
-%   %%% Determine depth of the undercurrent based on max northward flow speed
-%   ucmax = max(circ_twa(uc_didx,:),[],1);
-%   uc_layidx = find(ucmax == max(ucmax));  
-%   
-%   %%% Range of latitudes over which to compute linear momentum budget
-%   %%% diagnostics
-%   uc_yidx = find((yy_h>(75-amp_canyons)*m1km) & (yy_h<(75+amp_canyons)*m1km));
-% 
-%   %%% Compute diagnostics  
-%   uc_speed_batch(n) = avg_trap(y_avg(uc_didx),circ_twa(uc_didx,uc_layidx));
-% %   uc_EKE_batch(n) = mean(EKE(uc_yidx,uc_layidx)) / mean(h_avg(uc_yidx,uc_layidx));
-%   uc_EKE_batch(n) = avg_trap(y_avg(uc_didx),sum(EKE(uc_didx,uc_layidx:end).*h_avg(uc_didx,uc_layidx:end),2)) / avg_trap(y_avg(uc_didx),sum(h_avg(uc_didx,uc_layidx:end),2));
-%   tot_EKE_batch(n) = avg_trap(y_avg(uc_didx),sum(EKE(uc_didx,1:end),2).*h_avg(uc_didx,uc_layidx:end)) / avg_trap(y_avg(uc_didx),sum(h_avg(uc_didx,1:end),2));
-%   uc_advection_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   tot_advection_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,1:end),2)./cntrlen(uc_didx));
-%   uc_quadBotDrag_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_quadBotDrag(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   uc_baroForcing_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_baroForcing(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   uc_Montgomery_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_Montgomery(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   uc_windStress_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_windStress(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   uc_hypervisc_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_hypervisc(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-% %   uc_eddyforce_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx)+sum(circ_Montgomery(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-% %   uc_eddyforce_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   uc_eddyforce_batch(n) = avg_trap(y_avg(uc_didx),sum(rho0*circ_eddyMomFlux(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
-%   uc_TFS_batch(n) = mean(mean(sum(UMom_Montgomery(:,uc_yidx,:),3),1));
-% end
-% 
+%%%
+%%% plot_batch.m
+%%%
+%%% Plots scalings for eddy forcing of the undercurrent from our batch of simulations, for our JPO paper.
+%%%
+
+%%% Load constant parameters
+constants;
+rho0 = 1000;
+
+%%% Location of runs on file system
+local_home_dir = '/Volumes/Kilchoman/UCLA/Projects/AWSIM/runs';
+
+%%% Load parameters for all simulations in the batch
+[is_wind_batch,grid_size_batch,wind_stress_batch, ...
+  rand_force_batch,num_canyons_batch,amp_canyons_batch, ...
+  max_slope_batch,sb_width_batch,baro_force_batch, ...
+  drag_coeff_batch,end_time_batch] = loadBatchParams ('batchData_hires.txt');
+
+%%% Iterate through simulations 
+Nsims = length(is_wind_batch);
+uc_speed_batch = zeros(Nsims,1);
+uc_EKE_batch = zeros(Nsims,1);
+tot_EKE_batch = zeros(Nsims,1);
+uc_advection_batch = zeros(Nsims,1);
+uc_eddyforce_batch = zeros(Nsims,1);
+uc_hypervisc_batch = zeros(Nsims,1);
+tot_advection_batch = zeros(Nsims,1);
+uc_windStress_batch = zeros(Nsims,1);
+uc_baroForcing_batch = zeros(Nsims,1);
+uc_Montgomery_batch = zeros(Nsims,1);
+uc_quadBotDrag_batch = zeros(Nsims,1);
+uc_TFS_batch = zeros(Nsims,1);
+for n=1:Nsims
+  
+  %%% Derived parameters
+  if (is_wind_batch(n))
+    config = 'wind';
+  else
+    config = 'rand';
+  end  
+  grid_size = grid_size_batch(n);
+  wind_stress = wind_stress_batch(n);
+  rand_force = rand_force_batch(n);
+  num_canyons = num_canyons_batch(n);
+  amp_canyons = amp_canyons_batch(n);
+  max_slope = max_slope_batch(n);
+  sb_width = sb_width_batch(n);
+  baro_force = baro_force_batch(n);
+  drag_coeff = drag_coeff_batch(n);
+  end_time = end_time_batch(n);
+  
+  %%% Generate simulation name
+  run_name = constructRunName (config,grid_size,wind_stress, ...
+          rand_force,num_canyons,amp_canyons,max_slope,sb_width,baro_force,drag_coeff);
+  disp(['Working on ',run_name,' ...']);
+        
+  %%% Calculate along-isobath mean flow 
+  loadParams;
+  load(fullfile('products',[run_name,'_meanFlow.mat']));
+  load(fullfile('products',[run_name,'_momBalance.mat']));
+  
+  
+    
+  
+  %%% Range of depths (isobaths) over which to average  
+%   uc_didx = find((dd>=150) & (dd<=1000));
+  uc_didx = find((dd>=120) & (dd<=600));
+  
+  %%% Determine depth of the undercurrent based on max northward flow speed
+  ucmax = max(circ_twa(uc_didx,:),[],1);
+  uc_layidx = find(ucmax == max(ucmax));  
+  
+  %%% Range of latitudes over which to compute linear momentum budget
+  %%% diagnostics
+  uc_yidx = find((yy_h>(75-amp_canyons)*m1km) & (yy_h<(75+amp_canyons)*m1km));
+
+  %%% Compute diagnostics  
+  uc_speed_batch(n) = avg_trap(y_avg(uc_didx),circ_twa(uc_didx,uc_layidx));
+%   uc_EKE_batch(n) = mean(EKE(uc_yidx,uc_layidx)) / mean(h_avg(uc_yidx,uc_layidx));
+  uc_EKE_batch(n) = avg_trap(y_avg(uc_didx),sum(EKE(uc_didx,uc_layidx:end).*h_avg(uc_didx,uc_layidx:end),2)) / avg_trap(y_avg(uc_didx),sum(h_avg(uc_didx,uc_layidx:end),2));
+  tot_EKE_batch(n) = avg_trap(y_avg(uc_didx),sum(EKE(uc_didx,1:end),2).*h_avg(uc_didx,uc_layidx:end)) / avg_trap(y_avg(uc_didx),sum(h_avg(uc_didx,1:end),2));
+  uc_advection_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  tot_advection_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,1:end),2)./cntrlen(uc_didx));
+  uc_quadBotDrag_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_quadBotDrag(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  uc_baroForcing_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_baroForcing(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  uc_Montgomery_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_Montgomery(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  uc_windStress_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_windStress(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  uc_hypervisc_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_hypervisc(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+%   uc_eddyforce_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx)+sum(circ_Montgomery(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+%   uc_eddyforce_batch(n) = avg_trap(y_avg(uc_didx),sum(circ_advection(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  uc_eddyforce_batch(n) = avg_trap(y_avg(uc_didx),sum(rho0*circ_eddyMomFlux(uc_didx,uc_layidx:end),2)./cntrlen(uc_didx));
+  uc_TFS_batch(n) = mean(mean(sum(UMom_Montgomery(:,uc_yidx,:),3),1));
+end
+
 
 
 
